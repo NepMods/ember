@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html" class="active">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; Architecture</div>
+
+    <div class="content">
+      <h1>Architecture</h1>
+      <p>ember is a single flat Go package (~3,000 LOC) providing a Laravel Eloquent-inspired ORM. This page documents the logical architecture, module relationships, data flows, and key design decisions.</p>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#package-structure">Package Structure</a></li>
+          <li class="toc-h2"><a href="#dependency-graph">Dependency Graph</a></li>
+          <li class="toc-h2"><a href="#data-flow">Data Flow</a></li>
+          <li class="toc-h2"><a href="#design-decisions">Design Decisions</a></li>
+          <li class="toc-h2"><a href="#thread-safety">Thread Safety</a></li>
+          <li class="toc-h2"><a href="#security">Security Considerations</a></li>
+          <li class="toc-h2"><a href="#known-limitations">Known Limitations</a></li>
+        </ul>
+      </div>
+
+      <h2 id="package-structure">Package Structure</h2>
+      <p>ember is a flat package — every file shares all types and functions without import edges. This avoids circular imports and simplifies the user import path to one line.</p>
+
+      <div class="diagram">
+<span class="keyword">ember/</span>
+  ├── <span class="keyword">orm.go</span>          <span class="comment">// Package doc + Version constant</span>
+  ├── <span class="keyword">db.go</span>           <span class="comment">// Core DB struct — master + replica handles, Open(), routing</span>
+  ├── <span class="keyword">builder.go</span>      <span class="comment">// Fluent SQL builder — ~1,500 lines, all query types</span>
+  ├── <span class="keyword">model.go</span>        <span class="comment">// ModelDB — active-record CRUD, hook interfaces, scopes</span>
+  ├── <span class="keyword">schema.go</span>       <span class="comment">// Struct introspection — ParseSchema, FieldSchema, ModelSchema</span>
+  ├── <span class="keyword">dialect.go</span>      <span class="comment">// Dialect interface + Postgres/MySQL/SQLite implementations</span>
+  ├── <span class="keyword">blueprint.go</span>    <span class="comment">// Migration column/table DSL — ColumnDef, IndexDef, ForeignKeyDef</span>
+  ├── <span class="keyword">migration.go</span>    <span class="comment">// Migration framework — Schema, Migrator, Run/Rollback/Fresh</span>
+  ├── <span class="keyword">raw.go</span>          <span class="comment">// RawQuery — raw SQL with Scan/First/Exec/Pluck/Value</span>
+  ├── <span class="keyword">tx.go</span>           <span class="comment">// Tx — transaction wrapper with savepoints</span>
+  ├── <span class="keyword">errors.go</span>       <span class="comment">// Sentinel errors + QueryError wrapper</span>
+  ├── <span class="keyword">config.go</span>       <span class="comment">// Config and PoolConfig structs</span>
+  ├── <span class="keyword">manager.go</span>      <span class="comment">// ConnectionManager — named connection registry</span>
+  ├── <span class="keyword">relations.go</span>    <span class="comment">// Eager loading engine — HasMany/HasOne/BelongsTo/BelongsToMany</span>
+  ├── <span class="keyword">pagination.go</span>   <span class="comment">// Paginator — COUNT + SELECT with metadata</span>
+  ├── <span class="keyword">serialization.go</span><span class="comment">// ModelToMap, ToJSON, Collection serialization</span>
+  ├── <span class="keyword">events.go</span>       <span class="comment">// Observer-pattern event system</span>
+  ├── <span class="keyword">scopes.go</span>       <span class="comment">// ScopeRegistry — per-model global scope storage</span>
+  ├── <span class="keyword">macros.go</span>       <span class="comment">// Builder macros — per-instance and global</span>
+  ├── <span class="keyword">casting.go</span>      <span class="comment">// Attribute casting on read/write</span>
+  └── <span class="keyword">orm_test.go</span>    <span class="comment">// Integration tests (SQLite in-memory)</span>
+      </div>
+
+      <h2 id="dependency-graph">Dependency Graph</h2>
+      <p>Although all files are in one Go package, there is a logical dependency hierarchy:</p>
+
+      <div class="diagram">
+<span class="keyword">errors.go</span> ────────────────────── <span class="comment">(sentinel errors used everywhere)</span>
+<span class="keyword">config.go</span> ────────────────────── <span class="comment">(Config struct used by db.go)</span>
+<span class="keyword">dialect.go</span> ───────────────────── <span class="comment">(used by db.go, builder.go, blueprint.go, migration.go, schema.go)</span>
+          │
+<span class="keyword">db.go</span> ────────────────────────── <span class="comment">(DB struct — root object)</span>
+  ├── <span class="keyword">builder.go</span> ───────────────── <span class="comment">(Builder — returned by DB.Table())</span>
+  │     ├── <span class="keyword">raw.go</span> ───────────────── <span class="comment">(RawQuery — returned by DB.Raw())</span>
+  │     └── <span class="keyword">pagination.go</span> ────────── <span class="comment">(Paginator — uses Builder.Count())</span>
+  ├── <span class="keyword">model.go</span> ─────────────────── <span class="comment">(ModelDB — returned by DB.Model())</span>
+  │     ├── <span class="keyword">schema.go</span> ────────────── <span class="comment">(ParseSchema — struct introspection)</span>
+  │     ├── <span class="keyword">relations.go</span> ─────────── <span class="comment">(eager loading — used by ModelDB.With())</span>
+  │     ├── <span class="keyword">events.go</span> ────────────── <span class="comment">(Observer lifecycle events)</span>
+  │     ├── <span class="keyword">scopes.go</span> ────────────── <span class="comment">(ScopeRegistry — global scopes)</span>
+  │     └── <span class="keyword">casting.go</span> ───────────── <span class="comment">(attribute cast on read/write)</span>
+  ├── <span class="keyword">tx.go</span> ────────────────────── <span class="comment">(Tx — returned by DB.Begin())</span>
+  ├── <span class="keyword">manager.go</span> ───────────────── <span class="comment">(ConnectionManager — registry of *DB)</span>
+  └── <span class="keyword">migration.go</span> ─────────────── <span class="comment">(Schema + Migrator — DDL operations)</span>
+        └── <span class="keyword">blueprint.go</span> ─────────── <span class="comment">(Column/Index/FK definitions)</span>
+
+<span class="keyword">macros.go</span> ────────────────────── <span class="comment">(BuilderMacro — attached to Builder)</span>
+<span class="keyword">serialization.go</span> ─────────────── <span class="comment">(ModelToMap/ToJSON — standalone functions)</span>
+
+<span class="keyword">orm.go</span> ───────────────────────── <span class="comment">(package doc + Version constant)</span>
+<span class="keyword">orm_test.go</span> ──────────────────── <span class="comment">(tests, imports ember as external package)</span></div>
+
+      <h2 id="data-flow">Data Flow</h2>
+
+      <h3>Query Execution (Builder → DB → SQL)</h3>
+      <div class="diagram">
+                         ┌─────────────────────────────────────┐
+                         │          User Code                   │
+                         │  db.Table("users").Where("age","&gt;",18) │
+                         │    .OrderBy("name","ASC").Get(ctx)   │
+                         └──────────┬──────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │    Builder.ToSQL()             │
+                    │  compiles query + bind args    │
+                    │                               │
+                    │  ┌───────────────────────┐    │
+                    │  │ Dialect.QuoteIdent()  │────│──► "users", "age", "name"
+                    │  │ Dialect.Placeholder() │────│──► $1/$2 (PG) or ? (MY/SQ)
+                    │  │ compileWheres()       │────│──► recursive WHERE compile
+                    │  └───────────────────────┘    │
+                    └──────────┬────────────────────┘
+                               │
+                               ▼
+                    ┌───────────────────────────────┐
+                    │   DB.QueryContext()            │
+                    │   routes to read or write DB   │
+                    │                               │
+                    │  ┌─────────────────────┐       │
+                    │  │ SELECT/WITH?        │       │
+                    │  │  YES ──► readDB()   │───────│──► replica (round-robin)
+                    │  │  NO  ──► writeDB()  │───────│──► master
+                    │  │ FOR UPDATE ─► write │       │
+                    │  └─────────────────────┘       │
+                    └──────────┬────────────────────┘
+                               │
+                               ▼
+                    ┌───────────────────────────────┐
+                    │   scanRows()                   │
+                    │  maps columns to struct fields │
+                    │                               │
+                    │  ┌─────────────────────┐       │
+                    │  │ ParseSchema()       │───────│──► cached reflect.Type
+                    │  │ scanPointersByCol() │───────│──► per-column Scan dest
+                    │  │ scanTimeStrings()   │───────│──► string→time.Time
+                    │  │ applyCastsOnRead()  │───────│──► JSON/date/datetime
+                    │  └─────────────────────┘       │
+                    └────────────────────────────────┘</div>
+
+      <h3>Model Create Flow</h3>
+      <div class="diagram">
+                    db.Model().Create(ctx, &amp;user)
+                           │
+                           ▼
+              ┌────────────────────────────┐
+              │  ParseSchema(&amp;user)        │  cached introspection
+              └───────────┬────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────┐
+              │  Fire: EventSaving         │
+              │  Fire: EventCreating       │  observer pattern
+              │  Run:  BeforeSave()        │
+              │  Run:  BeforeCreate()      │  hook interfaces
+              └───────────┬────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────┐
+              │  Build data map            │
+              │  Skip auto-inc PK if zero  │
+              │  Set created_at/updated_at │
+              │  applyCastsOnWrite()       │  serialize JSON/dates
+              └───────────┬────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────┐
+              │  Builder.InsertGetId()     │
+              │                            │
+              │  ┌──────────────────┐      │
+              │  │ Has RETURNING?   │      │
+              │  │  YES ──INSERT    │      │  Postgres/SQLite 3.35+
+              │  │         RETURN   │      │
+              │  │  NO  ──INSERT    │      │  MySQL
+              │  │         +LastID  │      │
+              │  └──────────────────┘      │
+              └───────────┬────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────┐
+              │  Write back: generated ID  │
+              │              timestamps    │
+              │  Run:  AfterCreate()       │
+              │  Run:  AfterSave()         │
+              │  Fire: EventCreated        │
+              │  Fire: EventSaved          │
+              └────────────────────────────┘</div>
+
+      <h3>Eager Loading Flow</h3>
+      <div class="diagram">
+                db.Model().With("Posts").All(ctx, &amp;users)
+                           │
+                           ▼
+              ┌────────────────────────────────┐
+              │  QUERY 1: SELECT * FROM users  │
+              │  WHERE deleted_at IS NULL      │
+              │  Scan all users into []User    │
+              └───────────┬────────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────────┐
+              │  For each relation: "Posts"    │
+              │                                │
+              │  Parse relation definition     │
+              │  (HasMany, foreignKey:user_id) │
+              │                                │
+              │  Collect local keys from       │
+              │  parents: [1, 2, 3, ...]       │
+              └───────────┬────────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────────┐
+              │  QUERY 2: SELECT * FROM posts  │
+              │  WHERE user_id IN (1,2,3,...)  │
+              │                                │
+              │  Scan all posts                │
+              │  Group by user_id via safeKey()│
+              │  Assign to parent.Posts        │
+              │  via FieldByName()             │
+              └───────────┬────────────────────┘
+                          │
+                          ▼
+              ┌────────────────────────────────┐
+              │  Nested: "Posts.Tags"          │
+              │  Repeat for child relations    │
+              │                                │
+              │  Collect tag IDs: [10,11,12]   │
+              │  QUERY 3: SELECT * FROM tags   │
+              │  WHERE id IN (10,11,12)        │
+              └────────────────────────────────┘</div>
+
+      <h3>Transaction Flow</h3>
+      <div class="diagram">
+    db.Transaction(ctx, func(tx *ember.Tx) error {
+        tx.Table("accounts").Decrement(ctx, "balance", 100)
+        tx.Table("accounts").Increment(ctx, "balance", 100)
+        return nil
+    })
+           │
+           ▼
+    ┌──────────────────────────────────────┐
+    │  db.Begin()                          │
+    │  └──► sql.BeginTx(ctx, opts)        │
+    │       acquires connection from pool  │
+    └───────────────┬──────────────────────┘
+                    │
+                    ▼
+    ┌──────────────────────────────────────┐
+    │  fn(tx) executes                     │
+    │                                      │
+    │  ┌─ tx.Table() ──► Builder ──────┐  │
+    │  │                 tx.ExecContext │  │
+    │  ├─ tx.Raw()  ──► RawQuery  ─────┤  │
+    │  │                 tx.ExecContext │  │
+    │  ├─ tx.Model()──► ModelDB  ──────┤  │
+    │  │                 tx.Tx internal │  │
+    │  └────────────────────────────────┘  │
+    └───────────────┬──────────────────────┘
+                    │
+          ┌─────────┴──────────┐
+          ▼                    ▼
+    ┌────────────┐    ┌────────────────┐
+    │ fn == nil  │    │ fn != nil      │
+    │ tx.Commit()│    │ tx.Rollback()  │
+    │            │    │                │
+    │ success    │    │ returns error  │
+    └────────────┘    └────────────────┘</div>
+
+      <h2 id="design-decisions">Design Decisions</h2>
+
+      <h3>1. Flat Package (No Sub-Packages)</h3>
+      <p>ember lives entirely in a single Go package. This avoids circular import problems common in layered ORMs, simplifies the import path to one line, and allows internal types to remain unexported while shared across all subsystems. The tradeoff is a larger API surface but zero import-cycle headaches.</p>
+
+      <h3>2. Master/Replica Pattern</h3>
+      <p>Each Config defines one master DSN and N replica DSNs. Writes always go to master; SELECTs use round-robin load balancing across replicas. A sticky-read context key (<code>WithStickyMaster</code>) forces reads to master after a write. This mirrors production deployment patterns and avoids middleware-level read/write splitting.</p>
+
+      <h3>3. Interface-Based Dialect System</h3>
+      <p>The <code>Dialect</code> interface abstracts quoting (<code>"</code> vs <code>`</code>), placeholders (<code>$N</code> vs <code>?</code>), RETURNING support, and UPSERT syntax. New databases are added by implementing this interface and registering in <code>GetDialect()</code>.</p>
+
+      <h3>4. Eager Loading Uses IN Queries Instead of Joins</h3>
+      <p>When loading HasMany/BelongsTo/BelongsToMany, ember first queries parent records, collects their keys, then executes a single <code>WHERE fk IN (...)</code> for all children. Results are grouped in memory by foreign key and assigned via reflection. This produces two simple queries instead of one complex join, avoids row duplication, and works correctly with LIMIT.</p>
+
+      <h3>5. Pagination: Separate COUNT + SELECT</h3>
+      <p><code>Paginate()</code> runs COUNT(*) first, then SELECT ... LIMIT/OFFSET. Database-agnostic, avoids deprecated MySQL-specific SQL_CALC_FOUND_ROWS.</p>
+
+      <h3>6. Tag-Based Casting</h3>
+      <p>Attribute casts are declared on struct field tags (<code>ember:"cast:json"</code>) rather than via a method. Keeps the type system as the source of truth and makes casts visible at a glance.</p>
+
+      <h3>7. Observer Pattern for Events</h3>
+      <p>The Observer interface + EventDispatcher with Fire() broadcasting follows the classical Observer pattern. Synchronous, deterministic, and simpler to debug than channel-based approaches.</p>
+
+      <h3>8. Global Scopes via Registry</h3>
+      <p>Scopes are registered imperatively (<code>db.ScopeRegistry().Add(&MyModel{}, scope)</code>) rather than via a boot() method. Decouples scope definition from model definition and allows runtime registration.</p>
+
+      <h3>9. Schema Caching with sync.RWMutex</h3>
+      <p>ParseSchema() caches parsed schemas by reflect.Type in a global map guarded by sync.RWMutex. Reads use RLock for fast-path; write lock only acquired when a new type is parsed.</p>
+
+      <h2 id="thread-safety">Thread Safety</h2>
+      <table>
+        <tr><th>Component</th><th>Safe?</th><th>Notes</th></tr>
+        <tr><td><code>DB</code> (master/replica handles)</td><td><span class="badge badge-green">Yes</span></td><td>*sql.DB is safe; replica index uses atomic.AddUint64</td></tr>
+        <tr><td><code>Builder</code></td><td><span class="badge badge-orange">No</span></td><td>Single-goroutine only — clone for parallel branches</td></tr>
+        <tr><td><code>ConnectionManager</code></td><td><span class="badge badge-green">Yes</span></td><td>sync.RWMutex on all operations</td></tr>
+        <tr><td><code>EventDispatcher</code></td><td><span class="badge badge-green">Yes</span></td><td>sync.RWMutex on observe/fire</td></tr>
+        <tr><td><code>ScopeRegistry</code></td><td><span class="badge badge-green">Yes</span></td><td>sync.RWMutex on add/get</td></tr>
+        <tr><td>Schema cache</td><td><span class="badge badge-green">Yes</span></td><td>sync.RWMutex — read-locked on fast path</td></tr>
+        <tr><td><code>ModelDB</code></td><td><span class="badge badge-orange">No</span></td><td>Inherits Builder — relies on reflect, not safe</td></tr>
+        <tr><td>Global macros</td><td><span class="badge badge-green">Yes</span></td><td>sync.RWMutex on add/call</td></tr>
+      </table>
+
+      <h2 id="security">Security Considerations</h2>
+
+      <h3>SQL Injection Prevention</h3>
+      <ul>
+        <li><strong>All user values</strong> are passed as bind parameters (<code>?</code> or <code>$N</code>), never interpolated into SQL strings.</li>
+        <li><strong>Column/table names</strong> are quoted via <code>Dialect.QuoteIdentifier()</code> — they come from struct tags or trusted code, not user input.</li>
+        <li><strong>Operator whitelist</strong>: Builder.Where() validates the operator against a map of valid operators. Invalid operators silently default to <code>=</code>.</li>
+        <li><strong>Raw SQL methods</strong> (<code>WhereRaw</code>, <code>HavingRaw</code>, <code>OrderByRaw</code>, <code>RawQuery</code>) accept raw SQL — the caller is responsible for safe SQL.</li>
+      </ul>
+
+      <h3>Input Validation</h3>
+      <ul>
+        <li><strong>Savepoint names</strong> validated with <code>^[a-zA-Z_][a-zA-Z0-9_]*$</code> before interpolation.</li>
+        <li><strong>Default() quoting</strong>: String values are escaped (<code>'</code> → <code>''</code>) and wrapped in single quotes.</li>
+        <li><strong>Batch INSERT validation</strong>: All rows must have the same column set; mismatched columns return an error.</li>
+      </ul>
+
+      <h2 id="known-limitations">Known Limitations</h2>
+      <ul>
+        <li><strong>Pluralization is English-only</strong> — the pluralize() function handles common irregulars but does not support other languages.</li>
+        <li><strong>No model factory support</strong> — unlike Laravel's Factory for test data generation.</li>
+        <li><strong>No polymorphic relationship test coverage</strong> — MorphOne, MorphMany, MorphTo are parsed but not exercised in tests or eager loading.</li>
+        <li><strong>No Postgres/MySQL integration tests</strong> — all tests use SQLite in-memory. Dialect-specific features are tested via ToSQL() output.</li>
+        <li><strong>Concurrent builder use is not safe</strong> — sharing a Builder across goroutines causes data races.</li>
+        <li><strong>Embedded/anonymous struct fields are skipped</strong> — ParseSchema skips anonymous fields.</li>
+        <li><strong>No migration file scanning</strong> — migrations must be registered explicitly with <code>NewMigrator(db, migrations...)</code>.</li>
+      </ul>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

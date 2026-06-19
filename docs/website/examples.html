@@ -1,0 +1,1171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Examples — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html" class="active">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; Examples</div>
+
+    <div class="content">
+      <h1>Examples</h1>
+      <p>Real-world, runnable examples demonstrating ember features. All examples use SQLite in-memory so you can copy and run them immediately. Every example shows proper Go error handling.</p>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#basic-crud">Basic CRUD</a></li>
+          <li class="toc-h2"><a href="#complex-queries">Complex Queries</a></li>
+          <li class="toc-h2"><a href="#transactions">Transactions</a></li>
+          <li class="toc-h2"><a href="#migrations">Migrations</a></li>
+          <li class="toc-h2"><a href="#relationships">Relationships</a></li>
+          <li class="toc-h2"><a href="#eager-loading">Eager Loading</a></li>
+          <li class="toc-h2"><a href="#scopes">Scopes</a></li>
+          <li class="toc-h2"><a href="#raw-sql">Raw SQL</a></li>
+          <li class="toc-h2"><a href="#serialization">Serialization</a></li>
+          <li class="toc-h2"><a href="#events-hooks">Events &amp; Hooks</a></li>
+          <li class="toc-h2"><a href="#macros">Macros</a></li>
+          <li class="toc-h2"><a href="#real-world">Real-World: Blog API</a></li>
+        </ul>
+      </div>
+
+      <h2 id="basic-crud">Basic CRUD</h2>
+      <pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "time"
+    ember "github.com/NepMods/ember"
+)
+
+type Product struct {
+    ID        int64   `ember:"primaryKey;autoIncr"`
+    Name      string
+    Price     float64 `ember:"default:0"`
+    Status    string  `ember:` + "`" + `default:"active"` + "`" + `
+    CreatedAt time.Time
+    UpdatedAt time.Time
+}
+
+func main() {
+    ctx := context.Background()
+
+    db, err := ember.Open(ember.Config{
+        Driver: "sqlite3",
+        Master: ":memory:",
+    })
+    if err != nil {
+        log.Fatalf("failed to open db: %v", err)
+    }
+    defer db.Close()
+
+    // Auto-migrate (create table from struct)
+    _, err = db.Raw(`CREATE TABLE products (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        price REAL DEFAULT 0,
+        status TEXT DEFAULT 'active',
+        created_at TEXT,
+        updated_at TEXT
+    )`).Exec(ctx)
+    if err != nil {
+        log.Fatalf("failed to create table: %v", err)
+    }
+
+    // CREATE
+    p := &Product{Name: "Widget", Price: 9.99}
+    if err := db.Model().Create(ctx, p); err != nil {
+        log.Fatalf("failed to create product: %v", err)
+    }
+    fmt.Printf("Created product #%d: %s\n", p.ID, p.Name)
+
+    // READ (Find by PK)
+    var found Product
+    if err := db.Model().Find(ctx, &found, p.ID); err != nil {
+        log.Fatalf("failed to find product: %v", err)
+    }
+    fmt.Printf("Found: %s ($%.2f)\n", found.Name, found.Price)
+
+    // READ (First with condition)
+    var first Product
+    if err := db.Model().First(ctx, &first, func(b *ember.Builder) {
+        b.Where("name", "LIKE", "%Widget%")
+    }); err != nil {
+        log.Fatalf("failed to find first product: %v", err)
+    }
+    fmt.Printf("First: %s\n", first.Name)
+
+    // READ (All)
+    var all []Product
+    if err := db.Model().All(ctx, &all); err != nil {
+        log.Fatalf("failed to list products: %v", err)
+    }
+    fmt.Printf("Total products: %d\n", len(all))
+
+    // UPDATE
+    found.Price = 14.99
+    if err := db.Model().Save(ctx, &found); err != nil {
+        log.Fatalf("failed to save product: %v", err)
+    }
+
+    // DELETE
+    if err := db.Model().Delete(ctx, &found); err != nil {
+        log.Fatalf("failed to delete product: %v", err)
+    }
+}</code></pre>
+
+      <h2 id="complex-queries">Complex Queries</h2>
+      <pre><code>// Builder query with multiple conditions
+var results []Product
+if err := db.Table("products").
+    Select("name", "price", "status").
+    Where("status", "=", "active").
+    Where("price", "&gt;=", 10.0).
+    OrWhere("price", "=", 0).
+    WhereGroup(func(b *ember.Builder) {
+        b.Where("name", "LIKE", "%Widget%")
+        b.OrWhere("name", "LIKE", "%Gadget%")
+    }).
+    OrderBy("price", "DESC").
+    Limit(10).
+    Offset(0).
+    Get(ctx, &results); err != nil {
+    log.Fatalf("query failed: %v", err)
+}
+
+// JOIN
+var joined []map[string]interface{}
+if err := db.Table("orders").
+    Select("orders.id", "products.name", "orders.quantity").
+    Join("products", "products.id", "=", "orders.product_id").
+    Where("orders.quantity", "&gt;", 1).
+    Get(ctx, &joined); err != nil {
+    log.Fatalf("join failed: %v", err)
+}
+
+// WHERE IN
+if err := db.Table("products").WhereIn("id", 1, 2, 3, 4, 5).Get(ctx, &results); err != nil {
+    log.Fatalf("where in failed: %v", err)
+}
+
+// WHERE BETWEEN
+if err := db.Table("products").WhereBetween("price", 10.0, 50.0).Get(ctx, &results); err != nil {
+    log.Fatalf("where between failed: %v", err)
+}
+
+// WHERE NULL / NOT NULL
+if err := db.Table("products").WhereNull("deleted_at").Get(ctx, &results); err != nil {
+    log.Fatalf("where null failed: %v", err)
+}
+if err := db.Table("products").WhereNotNull("category_id").Get(ctx, &results); err != nil {
+    log.Fatalf("where not null failed: %v", err)
+}
+
+// GROUP BY / HAVING
+type CountResult struct {
+    Status string
+    Cnt    int
+}
+var counts []CountResult
+if err := db.Table("products").
+    Select("status", "COUNT(*) AS cnt").
+    GroupBy("status").
+    Having("cnt", "&gt;", 5).
+    Get(ctx, &counts); err != nil {
+    log.Fatalf("group by failed: %v", err)
+}
+
+// Aggregates
+count, err := db.Table("products").Count(ctx)
+if err != nil { log.Fatalf("count failed: %v", err) }
+
+sum, err := db.Table("products").Sum(ctx, "price")
+if err != nil { log.Fatalf("sum failed: %v", err) }
+
+avg, err := db.Table("products").Avg(ctx, "price")
+if err != nil { log.Fatalf("avg failed: %v", err) }
+
+min, err := db.Table("products").Min(ctx, "price")
+if err != nil { log.Fatalf("min failed: %v", err) }
+
+max, err := db.Table("products").Max(ctx, "price")
+if err != nil { log.Fatalf("max failed: %v", err) }
+
+exists, err := db.Table("products").Where("status", "=", "active").Exists(ctx)
+if err != nil { log.Fatalf("exists failed: %v", err) }
+
+// Pagination
+var page []Product
+paginator, err := db.Table("products").
+    Where("status", "=", "active").
+    OrderBy("id", "ASC").
+    Paginate(ctx, &page, 1, 20)
+if err != nil {
+    log.Fatalf("paginate failed: %v", err)
+}
+fmt.Printf("Page %d of %d (total: %d items)\n",
+    paginator.CurrentPage, paginator.LastPage, paginator.Total)
+
+// Chunking (process in batches)
+if err := db.Table("products").Where("status", "=", "active").Chunk(ctx, 100,
+    func(batch []map[string]interface{}) bool {
+        for _, row := range batch {
+            fmt.Println(row["name"])
+        }
+        return true // continue
+    }); err != nil {
+    log.Fatalf("chunk failed: %v", err)
+}
+
+// Lock modes
+var product Product
+if err := db.Table("products").Where("id", "=", 1).LockForUpdate().First(ctx, &product); err != nil {
+    log.Fatalf("lock for update failed: %v", err)
+}
+if err := db.Table("products").Where("id", "=", 1).SharedLock().First(ctx, &product); err != nil {
+    log.Fatalf("shared lock failed: %v", err)
+}
+
+// Increment/Decrement
+if _, err := db.Table("products").Where("id", "=", 1).Increment(ctx, "views"); err != nil {
+    log.Fatalf("increment failed: %v", err)
+}
+if _, err := db.Table("products").Where("id", "=", 1).Decrement(ctx, "stock", 2); err != nil {
+    log.Fatalf("decrement failed: %v", err)
+}
+
+// Upsert
+if err := db.Table("products").Upsert(ctx,
+    map[string]interface{}{"id": 1, "name": "Widget", "price": 12.99},
+    []string{"id"},
+    []string{"name", "price"},
+); err != nil {
+    log.Fatalf("upsert failed: %v", err)
+}
+
+// Batch Insert
+ids, err := db.Table("products").InsertBatch(ctx, []map[string]interface{}{
+    {"name": "Widget A", "price": 9.99},
+    {"name": "Widget B", "price": 14.99},
+})
+if err != nil {
+    log.Fatalf("batch insert failed: %v", err)
+}</code></pre>
+
+      <h2 id="transactions">Transactions</h2>
+      <pre><code>// Simple transaction (auto-rollback on error)
+err := db.Transaction(ctx, func(tx *ember.Tx) error {
+    if err := tx.Table("accounts").Where("id", "=", 1).
+        Update(ctx, map[string]interface{}{"balance": 100}); err != nil {
+        return fmt.Errorf("update account 1: %w", err)
+    }
+    if err := tx.Table("accounts").Where("id", "=", 2).
+        Update(ctx, map[string]interface{}{"balance": 200}); err != nil {
+        return fmt.Errorf("update account 2: %w", err)
+    }
+    return nil
+})
+if err != nil {
+    log.Fatalf("transaction failed: %v", err)
+}
+
+// Manual transaction with savepoints
+tx, err := db.Begin(ctx, nil)
+if err != nil {
+    log.Fatalf("begin failed: %v", err)
+}
+
+// Use Builder within transaction
+if _, err := tx.Table("orders").Insert(ctx, map[string]interface{}{
+    "product_id": 1, "quantity": 2,
+}); err != nil {
+    tx.Rollback()
+    log.Fatalf("insert failed: %v", err)
+}
+
+// Create a savepoint
+if err := tx.Savepoint(ctx, "after_order"); err != nil {
+    tx.Rollback()
+    log.Fatalf("savepoint failed: %v", err)
+}
+
+// More operations
+if _, err := tx.Table("inventory").Where("product_id", "=", 1).
+    Decrement(ctx, "stock", 2); err != nil {
+    tx.Rollback()
+    log.Fatalf("decrement failed: %v", err)
+}
+
+// Rollback to savepoint on partial failure
+if err := tx.RollbackTo(ctx, "after_order"); err != nil {
+    tx.Rollback()
+    log.Fatalf("rollback to savepoint failed: %v", err)
+}
+
+// Model API in transaction
+var user User
+if err := tx.Model().Find(ctx, &user, 1); err != nil {
+    tx.Rollback()
+    log.Fatalf("find in tx failed: %v", err)
+}
+user.Name = "Updated"
+if err := tx.Model().Save(ctx, &user); err != nil {
+    tx.Rollback()
+    log.Fatalf("save in tx failed: %v", err)
+}
+
+// Raw queries in transaction
+if _, err := tx.Raw("UPDATE accounts SET balance = balance - ? WHERE id = ?", 50, 1).Exec(ctx); err != nil {
+    tx.Rollback()
+    log.Fatalf("raw exec in tx failed: %v", err)
+}
+
+// Commit
+if err := tx.Commit(); err != nil {
+    log.Fatalf("commit failed: %v", err)
+}
+
+// Defer rollback on panic (for manual transactions)
+tx2, err := db.Begin(ctx, nil)
+if err != nil {
+    log.Fatalf("begin failed: %v", err)
+}
+defer func() {
+    if r := recover(); r != nil {
+        tx2.Rollback()
+        panic(r)
+    }
+}()</code></pre>
+
+      <h2 id="migrations">Migrations</h2>
+      <pre><code>// Define migrations
+type CreateUsersTable struct{}
+func (m *CreateUsersTable) Version() string { return "2024_01_01_create_users" }
+func (m *CreateUsersTable) Up(s *ember.Schema) error {
+    return s.Create("users", func(t *ember.Blueprint) {
+        t.ID()
+        t.String("name")
+        t.String("email").Unique()
+        t.String("status").Default("active")
+        t.Timestamp("email_verified_at").Nullable()
+        t.Timestamps()
+        t.SoftDeletes()
+    })
+}
+func (m *CreateUsersTable) Down(s *ember.Schema) error {
+    return s.Drop("users")
+}
+
+type AddPhoneToUsers struct{}
+func (m *AddPhoneToUsers) Version() string { return "2024_01_15_add_phone_to_users" }
+func (m *AddPhoneToUsers) Up(s *ember.Schema) error {
+    return s.Table("users", func(t *ember.Blueprint) {
+        t.String("phone", 20).Nullable().After("email")
+    })
+}
+func (m *AddPhoneToUsers) Down(s *ember.Schema) error {
+    return s.Table("users", func(t *ember.Blueprint) {
+        t.DropColumn("phone")
+    })
+}
+
+// Run migrations
+migrator := ember.NewMigrator(db, &CreateUsersTable{}, &AddPhoneToUsers{})
+
+if err := migrator.Run(ctx); err != nil {
+    log.Fatalf("migration run failed: %v", err)
+}
+
+// Status
+statuses, err := migrator.Status(ctx)
+if err != nil {
+    log.Fatalf("migration status failed: %v", err)
+}
+for _, s := range statuses {
+    fmt.Printf("%s: ran=%v\n", s.Version, s.Ran)
+}
+
+// Rollback last step
+if err := migrator.Rollback(ctx, 1); err != nil {
+    log.Fatalf("rollback failed: %v", err)
+}
+
+// Rollback all
+if err := migrator.Rollback(ctx, 0); err != nil {
+    log.Fatalf("rollback all failed: %v", err)
+}
+
+// Fresh (drop all + re-run)
+if err := migrator.Fresh(ctx); err != nil {
+    log.Fatalf("fresh failed: %v", err)
+}
+
+// Pending migrations
+pending, err := migrator.Pending(ctx)
+if err != nil {
+    log.Fatalf("pending failed: %v", err)
+}
+fmt.Printf("%d pending migrations\n", len(pending))
+
+// Custom migration table
+migrator.SetTable("schema_migrations")
+
+// Raw DDL
+schema := ember.NewSchema(db)
+if err := schema.Raw("CREATE INDEX idx_users_email ON users(email)"); err != nil {
+    log.Fatalf("raw DDL failed: %v", err)
+}
+
+// Check table/column existence
+exists, err := schema.HasTable("users")
+if err != nil {
+    log.Fatalf("has table failed: %v", err)
+}
+hasCol, err := schema.HasColumn("users", "phone")
+if err != nil {
+    log.Fatalf("has column failed: %v", err)
+}</code></pre>
+
+      <h2 id="relationships">Relationships</h2>
+      <pre><code>// Define models with relationship tags
+type User struct {
+    ID        int64   `ember:"primaryKey;autoIncr"`
+    Name      string
+    Posts     []Post  `ember:"relation:hasMany;foreignKey:user_id;localKey:id"`
+    Profile   Profile `ember:"relation:hasOne;foreignKey:user_id;localKey:id"`
+}
+
+type Post struct {
+    ID        int64   `ember:"primaryKey;autoIncr"`
+    UserID    int64   `ember:"column:user_id"`
+    Title     string
+    Body      string
+    Author    User    `ember:"relation:belongsTo;foreignKey:user_id;ownerKey:id"`
+    Tags      []Tag   `ember:"relation:belongsToMany;pivot:post_tags;pivotFK:post_id;pivotRK:tag_id"`
+}
+
+type Profile struct {
+    ID     int64  `ember:"primaryKey;autoIncr"`
+    UserID int64  `ember:"column:user_id"`
+    Bio    string
+}
+
+type Tag struct {
+    ID   int64  `ember:"primaryKey;autoIncr"`
+    Name string
+}
+
+// Create related models
+user := &User{Name: "Alice"}
+if err := db.Model().Create(ctx, user); err != nil {
+    log.Fatalf("create user failed: %v", err)
+}
+
+post := &Post{UserID: user.ID, Title: "Hello", Body: "World"}
+if err := db.Model().Create(ctx, post); err != nil {
+    log.Fatalf("create post failed: %v", err)
+}
+
+profile := &Profile{UserID: user.ID, Bio: "Gopher"}
+if err := db.Model().Create(ctx, profile); err != nil {
+    log.Fatalf("create profile failed: %v", err)
+}
+
+tag := &Tag{Name: "Go"}
+if err := db.Model().Create(ctx, tag); err != nil {
+    log.Fatalf("create tag failed: %v", err)
+}
+
+// Load relationships individually
+var posts []Post
+if err := db.Model().LoadHasMany(ctx, user, ember.HasMany{ForeignKey: "user_id"}, &posts); err != nil {
+    log.Fatalf("load hasMany failed: %v", err)
+}
+
+var profileResult Profile
+if err := db.Model().LoadHasOne(ctx, user, ember.HasOne{ForeignKey: "user_id"}, &profileResult); err != nil {
+    log.Fatalf("load hasOne failed: %v", err)
+}
+
+var author User
+if err := db.Model().LoadBelongsTo(ctx, post, ember.BelongsTo{ForeignKey: "user_id"}, &author); err != nil {
+    log.Fatalf("load belongsTo failed: %v", err)
+}
+
+var tags []Tag
+if err := db.Model().LoadBelongsToMany(ctx, post, ember.BelongsToMany{
+    PivotTable: "post_tags", ForeignKey: "post_id", RelatedKey: "tag_id",
+}, &tags); err != nil {
+    log.Fatalf("load belongsToMany failed: %v", err)
+}</code></pre>
+
+      <h2 id="eager-loading">Eager Loading</h2>
+      <pre><code>// With() eliminates N+1 by loading all relationships in 2 queries total
+var users []User
+if err := db.Model().With("Posts", "Profile").All(ctx, &users); err != nil {
+    log.Fatalf("eager load failed: %v", err)
+}
+
+for _, u := range users {
+    fmt.Printf("User: %s, Posts: %d, Has Profile: %v\n",
+        u.Name, len(u.Posts), u.Profile.ID != 0)
+}
+
+// Nested eager loading (Posts → Tags)
+var usersWithTags []User
+if err := db.Model().With("Posts.Tags").All(ctx, &usersWithTags); err != nil {
+    log.Fatalf("nested eager load failed: %v", err)
+}
+
+// With Find
+var user User
+if err := db.Model().With("Posts", "Profile").Find(ctx, &user, 1); err != nil {
+    log.Fatalf("eager find failed: %v", err)
+}
+
+// With First
+var firstUser User
+if err := db.Model().With("Posts").First(ctx, &firstUser, func(b *ember.Builder) {
+    b.Where("status", "=", "active")
+}); err != nil {
+    log.Fatalf("eager first failed: %v", err)
+}
+
+// With Paginate
+var paginated []User
+paginator, err := db.Model().With("Posts").
+    Paginate(ctx, &paginated, 1, 10, func(b *ember.Builder) {
+        b.Where("status", "=", "active")
+    })
+if err != nil {
+    log.Fatalf("eager paginate failed: %v", err)
+}</code></pre>
+
+      <h2 id="scopes">Scopes</h2>
+      <pre><code>// Define reusable scopes
+func PriceAbove(min float64) ember.Scope {
+    return func(b *ember.Builder) *ember.Builder {
+        return b.Where("price", "&gt;=", min)
+    }
+}
+
+func ActiveOnly(b *ember.Builder) *ember.Builder {
+    return b.Where("status", "=", "active")
+}
+
+// Apply scopes to builder
+if err := ember.ApplyScopes(db.Table("products"), ActiveOnly, PriceAbove(10.0)).Get(ctx, &products); err != nil {
+    log.Fatalf("scope query failed: %v", err)
+}
+
+// Global scopes (automatically applied to all model queries)
+db.ScopeRegistry().Add(&Product{}, ActiveOnly)
+
+// Now all Product queries include WHERE status = 'active'
+if err := db.Model().All(ctx, &products); err != nil {  // includes scope
+    log.Fatalf("all with scope failed: %v", err)
+}
+if err := db.Model().Find(ctx, &product, 1); err != nil {  // includes scope
+    log.Fatalf("find with scope failed: %v", err)
+}
+
+// Built-in scope helpers
+if err := ember.ApplyScopes(db.Table("products"), ember.SoftDeleteScope).Get(ctx, &products); err != nil {
+    log.Fatalf("soft delete scope failed: %v", err)
+}
+
+// Include soft-deleted records
+if err := ember.ApplyScopes(db.Table("products"), ember.WithTrashedScope()).Get(ctx, &products); err != nil {
+    log.Fatalf("with trashed scope failed: %v", err)
+}
+
+// Only soft-deleted records
+if err := ember.ApplyScopes(db.Table("products"), ember.OnlyTrashedScope()).Get(ctx, &products); err != nil {
+    log.Fatalf("only trashed scope failed: %v", err)
+}</code></pre>
+
+      <h2 id="raw-sql">Raw SQL</h2>
+      <pre><code>// Single row scan
+var user User
+if err := db.Raw("SELECT * FROM users WHERE id = ?", 1).First(ctx, &user); err != nil {
+    log.Fatalf("raw first failed: %v", err)
+}
+
+// Multiple rows into struct slice
+var users []User
+if err := db.Raw("SELECT * FROM users WHERE age &gt; ?", 18).Scan(ctx, &users); err != nil {
+    log.Fatalf("raw scan failed: %v", err)
+}
+
+// Multiple rows into map slice
+var results []map[string]interface{}
+if err := db.Raw("SELECT id, name FROM users").Scan(ctx, &results); err != nil {
+    log.Fatalf("raw scan maps failed: %v", err)
+}
+
+// Exec (INSERT/UPDATE/DELETE)
+result, err := db.Raw("UPDATE users SET status = ? WHERE id = ?", "inactive", 1).Exec(ctx)
+if err != nil {
+    log.Fatalf("raw exec failed: %v", err)
+}
+affected, _ := result.RowsAffected()
+fmt.Printf("Rows affected: %d\n", affected)
+
+// ExecAffected shortcut
+count, err := db.Raw("DELETE FROM users WHERE status = ?", "deleted").ExecAffected(ctx)
+if err != nil {
+    log.Fatalf("raw delete failed: %v", err)
+}
+fmt.Printf("Deleted %d rows\n", count)
+
+// Pluck (single column)
+var emails []string
+if err := db.Raw("SELECT email FROM users").Pluck(ctx, &emails); err != nil {
+    log.Fatalf("raw pluck failed: %v", err)
+}
+
+// Value (single cell)
+var count int64
+if err := db.Raw("SELECT COUNT(*) FROM users").Value(ctx, &count); err != nil {
+    log.Fatalf("raw value failed: %v", err)
+}
+
+// With transactions
+if err := db.Transaction(ctx, func(tx *ember.Tx) error {
+    if _, err := tx.Raw("UPDATE accounts SET balance = balance - ? WHERE id = ?", 100, 1).Exec(ctx); err != nil {
+        return err
+    }
+    if _, err := tx.Raw("UPDATE accounts SET balance = balance + ? WHERE id = ?", 100, 2).Exec(ctx); err != nil {
+        return err
+    }
+    return nil
+}); err != nil {
+    log.Fatalf("raw tx failed: %v", err)
+}
+
+// ToSQL for debugging
+sql, args := db.Raw("SELECT * FROM users WHERE id = ? AND status = ?", 1, "active").ToSQL()
+fmt.Println(sql, args)</code></pre>
+
+      <h2 id="serialization">Serialization</h2>
+      <pre><code>// Single model to map
+user := &User{ID: 1, Name: "Alice", CreatedAt: time.Now()}
+m, err := ember.ModelToMap(user)
+if err != nil {
+    log.Fatalf("model to map failed: %v", err)
+}
+// {"id":1, "name":"Alice", "created_at":"2024-01-15T10:00:00Z", "updated_at":"..."}
+
+// Single model to JSON
+jsonBytes, err := ember.ToJSON(user)
+if err != nil {
+    log.Fatalf("to JSON failed: %v", err)
+}
+
+// Collection to maps
+users := []User{{ID: 1, Name: "Alice"}, {ID: 2, Name: "Bob"}}
+maps, err := ember.CollectionToMap(users)
+if err != nil {
+    log.Fatalf("collection to map failed: %v", err)
+}
+
+// Collection to JSON
+jsonBytes, err = ember.CollectionToJSON(users)
+if err != nil {
+    log.Fatalf("collection to JSON failed: %v", err)
+}
+
+// Custom config
+cfg := &ember.SerializationConfig{
+    DateFormat:        "2006-01-02",
+    DateTimeFormat:    "2006-01-02 15:04:05",
+    IncludeTimestamps: false,
+    IncludeSoftDelete: false,
+}
+
+m, err = ember.ModelToMapWithConfig(user, cfg)
+if err != nil {
+    log.Fatalf("model to map with config failed: %v", err)
+}
+// {"id":1, "name":"Alice"}
+
+// Fill struct from map
+data := map[string]interface{}{
+    "name":  "Charlie",
+    "email": "charlie@example.com",
+}
+if err := ember.FillFromMap(&user, data); err != nil {
+    log.Fatalf("fill from map failed: %v", err)
+}
+
+// SelectColumns helper
+schema, err := ember.ParseSchema(&User{})
+if err != nil {
+    log.Fatalf("parse schema failed: %v", err)
+}
+cols := ember.SelectColumns(schema, db.Dialect())
+// "id", "name", "email", ...</code></pre>
+
+      <h2 id="events-hooks">Events &amp; Hooks</h2>
+      <pre><code>// Model hooks (interface-based)
+type User struct {
+    ID   int64  `ember:"primaryKey;autoIncr"`
+    Name string
+    Age  int
+}
+
+func (u *User) BeforeCreate(ctx context.Context) error {
+    if u.Name == "" {
+        return fmt.Errorf("name is required")
+    }
+    return nil
+}
+
+func (u *User) AfterCreate(ctx context.Context) error {
+    log.Printf("User %d created: %s", u.ID, u.Name)
+    return nil
+}
+
+// Observer pattern
+type AuditObserver struct {
+    ember.BaseObserver // provides no-op defaults
+}
+
+func (o *AuditObserver) Created(ctx context.Context, model interface{}) error {
+    log.Printf("[AUDIT] Created: %T %+v", model, model)
+    return nil
+}
+
+func (o *AuditObserver) Deleted(ctx context.Context, model interface{}) error {
+    log.Printf("[AUDIT] Deleted: %T %+v", model, model)
+    return nil
+}
+
+// ObserverFuncs (functional style)
+funcTimeObserver := &ember.ObserverFuncs{
+    SavedFunc: func(ctx context.Context, m interface{}) error {
+        log.Printf("Saved: %+v", m)
+        return nil
+    },
+    DeletedFunc: func(ctx context.Context, m interface{}) error {
+        log.Printf("Deleted: %+v", m)
+        return nil
+    },
+}
+
+// Register
+dispatcher := ember.NewEventDispatcher()
+dispatcher.Observe(&User{}, &AuditObserver{})
+dispatcher.Observe(&User{}, funcTimeObserver)
+dispatcher.ObserveAll(&AuditObserver{}) // global observer
+db.SetEventDispatcher(dispatcher)
+
+// Events fire automatically on model operations
+if err := db.Model().Create(ctx, &User{Name: "Alice"}); err != nil {
+    log.Fatalf("create with events failed: %v", err)
+}
+if err := db.Model().Delete(ctx, &user); err != nil {
+    log.Fatalf("delete with events failed: %v", err)
+}
+
+// Available events
+// EventCreating, EventCreated, EventUpdating, EventUpdated,
+// EventSaving, EventSaved, EventDeleting, EventDeleted,
+// EventRestoring, EventRestored</code></pre>
+
+      <h2 id="macros">Macros</h2>
+      <pre><code>// Per-instance macro
+builder := db.Table("users")
+builder.Macro("whereActive", func(b *ember.Builder, args ...interface{}) interface{} {
+    return b.Where("status", "=", "active")
+})
+
+result, err := builder.Call("whereActive")
+if err != nil {
+    log.Fatalf("macro call failed: %v", err)
+}
+if b, ok := result.(*ember.Builder); ok {
+    if err := b.Get(ctx, &users); err != nil {
+        log.Fatalf("macro get failed: %v", err)
+    }
+}
+
+// Macro that returns a value
+builder.Macro("countWhere", func(b *ember.Builder, args ...interface{}) interface{} {
+    col := args[0].(string)
+    op := args[1].(string)
+    val := args[2]
+    count, err := b.Where(col, op, val).Count(context.Background())
+    if err != nil {
+        return err
+    }
+    return count
+})
+
+result, err := builder.Call("countWhere", "age", "&gt;", 18)
+if err != nil {
+    log.Fatalf("count macro failed: %v", err)
+}
+if count, ok := result.(int64); ok {
+    fmt.Printf("Count: %d\n", count)
+}
+
+// Global macro (available on all builders)
+ember.AddBuilderMacro("paginated", func(b *ember.Builder, args ...interface{}) interface{} {
+    page := args[0].(int)
+    perPage := args[1].(int)
+    return b.ForPage(page, perPage)
+})
+
+result, err := db.Table("users").Call("paginated", 1, 20)
+if err != nil {
+    log.Fatalf("global macro failed: %v", err)
+}
+if b, ok := result.(*ember.Builder); ok {
+    if err := b.Get(ctx, &users); err != nil {
+        log.Fatalf("global macro get failed: %v", err)
+    }
+}</code></pre>
+
+      <h2 id="real-world">Real-World: Blog API</h2>
+      <p>A complete example combining models, migrations, relationships, eager loading, pagination, serialization, events, and transactions — simulating a blog REST API backend.</p>
+      <pre><code>package main
+
+import (
+    "context"
+    "fmt"
+    "log"
+    "time"
+    ember "github.com/NepMods/ember"
+)
+
+// ─── Models ─────────────────────────────────────
+
+type User struct {
+    ID        int64     `ember:"primaryKey;autoIncr"`
+    Name      string    `ember:"column:name"`
+    Email     string    `ember:"unique"`
+    Status    string    `ember:` + "`" + `default:"active"` + "`" + `
+    Posts     []Post    `ember:"relation:hasMany;foreignKey:user_id;localKey:id"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+}
+
+type Post struct {
+    ID        int64     `ember:"primaryKey;autoIncr"`
+    UserID    int64     `ember:"column:user_id"`
+    Title     string
+    Body      string    `ember:"cast:json"`
+    Status    string    `ember:` + "`" + `default:"draft"` + "`" + `
+    Tags      []Tag     `ember:"relation:belongsToMany;pivot:post_tags;pivotFK:post_id;pivotRK:tag_id"`
+    Author    User      `ember:"relation:belongsTo;foreignKey:user_id;ownerKey:id"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    DeletedAt *time.Time `ember:"nullable"`
+}
+
+type Tag struct {
+    ID        int64     `ember:"primaryKey;autoIncr"`
+    Name      string    `ember:"unique"`
+    CreatedAt time.Time
+}
+
+// ─── Scaffold ───────────────────────────────────
+
+func createTables(ctx context.Context, db *ember.DB) error {
+    schema := ember.NewSchema(db)
+
+    if err := schema.Create("users", func(t *ember.Blueprint) {
+        t.ID()
+        t.String("name")
+        t.String("email").Unique()
+        t.String("status").Default("active")
+        t.Timestamps()
+    }); err != nil {
+        return fmt.Errorf("create users: %w", err)
+    }
+
+    if err := schema.Create("posts", func(t *ember.Blueprint) {
+        t.ID()
+        t.UnsignedBigInteger("user_id")
+        t.String("title")
+        t.Text("body")
+        t.String("status").Default("draft")
+        t.Timestamps()
+        t.SoftDeletes()
+        t.Foreign("user_id").References("id").On("users").CascadeOnDelete()
+    }); err != nil {
+        return fmt.Errorf("create posts: %w", err)
+    }
+
+    if err := schema.Create("tags", func(t *ember.Blueprint) {
+        t.ID()
+        t.String("name").Unique()
+        t.Timestamps()
+    }); err != nil {
+        return fmt.Errorf("create tags: %w", err)
+    }
+
+    if err := schema.Create("post_tags", func(t *ember.Blueprint) {
+        t.UnsignedBigInteger("post_id")
+        t.UnsignedBigInteger("tag_id")
+        t.Primary("post_id", "tag_id")
+        t.Foreign("post_id").References("id").On("posts").CascadeOnDelete()
+        t.Foreign("tag_id").References("id").On("tags").CascadeOnDelete()
+    }); err != nil {
+        return fmt.Errorf("create post_tags: %w", err)
+    }
+
+    return nil
+}
+
+// ─── Seed ───────────────────────────────────────
+
+func seedData(ctx context.Context, db *ember.DB) error {
+    users := []User{
+        {Name: "Alice", Email: "alice@example.com"},
+        {Name: "Bob", Email: "bob@example.com"},
+    }
+    for i := range users {
+        if err := db.Model().Create(ctx, &users[i]); err != nil {
+            return fmt.Errorf("create user %d: %w", i, err)
+        }
+    }
+
+    tags := []Tag{
+        {Name: "go"}, {Name: "tutorial"}, {Name: "news"},
+    }
+    for i := range tags {
+        if err := db.Model().Create(ctx, &tags[i]); err != nil {
+            return fmt.Errorf("create tag %d: %w", i, err)
+        }
+    }
+
+    posts := []Post{
+        {UserID: users[0].ID, Title: "Getting Started with Go", Body: "Go is a statically typed...", Status: "published"},
+        {UserID: users[0].ID, Title: "Advanced ORM Patterns", Body: "When building complex apps...", Status: "draft"},
+        {UserID: users[1].ID, Title: "Go Modules Guide", Body: "Go modules are the official...", Status: "published"},
+    }
+    for i := range posts {
+        if err := db.Model().Create(ctx, &posts[i]); err != nil {
+            return fmt.Errorf("create post %d: %w", i, err)
+        }
+    }
+
+    // Attach tags to posts
+    type postTag struct {
+        PostID int64 `ember:"column:post_id"`
+        TagID  int64 `ember:"column:tag_id"`
+    }
+    links := []postTag{
+        {PostID: posts[0].ID, TagID: tags[0].ID},
+        {PostID: posts[0].ID, TagID: tags[1].ID},
+        {PostID: posts[1].ID, TagID: tags[0].ID},
+        {PostID: posts[2].ID, TagID: tags[2].ID},
+        {PostID: posts[2].ID, TagID: tags[0].ID},
+    }
+    for _, l := range links {
+        m := map[string]interface{}{"post_id": l.PostID, "tag_id": l.TagID}
+        if _, err := db.Table("post_tags").Insert(ctx, m); err != nil {
+            return fmt.Errorf("link post %d to tag %d: %w", l.PostID, l.TagID, err)
+        }
+    }
+
+    return nil
+}
+
+// ─── Queries ────────────────────────────────────
+
+func listPublishedPosts(ctx context.Context, db *ember.DB, page, perPage int) error {
+    var posts []Post
+    paginator, err := db.Model().With("Author", "Tags").Paginate(ctx, &posts, page, perPage,
+        func(b *ember.Builder) {
+            b.Where("status", "=", "published").OrderBy("created_at", "DESC")
+        },
+    )
+    if err != nil {
+        return fmt.Errorf("paginate posts: %w", err)
+    }
+
+    fmt.Printf("Page %d of %d (total: %d posts)\n",
+        paginator.CurrentPage, paginator.LastPage, paginator.Total)
+
+    for _, p := range posts {
+        tagNames := make([]string, len(p.Tags))
+        for i, t := range p.Tags {
+            tagNames[i] = t.Name
+        }
+        fmt.Printf("  #%d [%s] %s by %s — Tags: %v\n",
+            p.ID, p.Status, p.Title, p.Author.Name, tagNames)
+    }
+    return nil
+}
+
+func createPostWithTransaction(ctx context.Context, db *ember.DB, userID int64, title, body string, tagIDs []int64) (*Post, error) {
+    var post *Post
+
+    err := db.Transaction(ctx, func(tx *ember.Tx) error {
+        post = &Post{UserID: userID, Title: title, Body: body, Status: "draft"}
+        if err := tx.Model().Create(ctx, post); err != nil {
+            return fmt.Errorf("create post: %w", err)
+        }
+
+        for _, tagID := range tagIDs {
+            m := map[string]interface{}{"post_id": post.ID, "tag_id": tagID}
+            if _, err := tx.Table("post_tags").Insert(ctx, m); err != nil {
+                return fmt.Errorf("attach tag %d: %w", tagID, err)
+            }
+        }
+        return nil
+    })
+    if err != nil {
+        return nil, err
+    }
+
+    return post, nil
+}
+
+func softDeleteAndRestore(ctx context.Context, db *ember.DB, postID int64) error {
+    var post Post
+    if err := db.Model().Find(ctx, &post, postID); err != nil {
+        return fmt.Errorf("find post: %w", err)
+    }
+
+    if err := db.Model().Delete(ctx, &post); err != nil {
+        return fmt.Errorf("soft delete: %w", err)
+    }
+    fmt.Printf("Soft-deleted post #%d at %v\n", post.ID, post.DeletedAt)
+
+    var trashed []Post
+    if err := ember.ApplyScopes(db.Table("posts"), ember.OnlyTrashedScope()).Get(ctx, &trashed); err != nil {
+        return fmt.Errorf("find trashed: %w", err)
+    }
+    fmt.Printf("Trashed posts: %d\n", len(trashed))
+
+    if err := db.Model().Restore(ctx, &post); err != nil {
+        return fmt.Errorf("restore: %w", err)
+    }
+    fmt.Printf("Restored post #%d\n", post.ID)
+    return nil
+}
+
+func searchPosts(ctx context.Context, db *ember.DB, query string) error {
+    var results []Post
+    if err := db.Table("posts").
+        Where("title", "LIKE", "%"+query+"%").
+        OrWhere("body", "LIKE", "%"+query+"%").
+        WhereNull("deleted_at").
+        OrderBy("created_at", "DESC").
+        Limit(20).
+        Get(ctx, &results); err != nil {
+        return fmt.Errorf("search: %w", err)
+    }
+    fmt.Printf("Found %d posts matching %q\n", len(results), query)
+    return nil
+}
+
+// ─── Main ───────────────────────────────────────
+
+func main() {
+    ctx := context.Background()
+
+    db, err := ember.Open(ember.Config{
+        Driver: "sqlite3",
+        Master: ":memory:",
+    })
+    if err != nil {
+        log.Fatalf("open: %v", err)
+    }
+    defer db.Close()
+
+    if err := createTables(ctx, db); err != nil {
+        log.Fatalf("migrate: %v", err)
+    }
+    fmt.Println("Tables created.")
+
+    if err := seedData(ctx, db); err != nil {
+        log.Fatalf("seed: %v", err)
+    }
+    fmt.Println("Seed data inserted.")
+
+    // List published posts with eager loading + pagination
+    if err := listPublishedPosts(ctx, db, 1, 10); err != nil {
+        log.Fatalf("list: %v", err)
+    }
+
+    // Create a post with tags in a transaction
+    post, err := createPostWithTransaction(ctx, db, 1, "New Post", "Content here", []int64{1, 2})
+    if err != nil {
+        log.Fatalf("create post: %v", err)
+    }
+    fmt.Printf("Created post #%d in transaction\n", post.ID)
+
+    // Soft delete and restore
+    if err := softDeleteAndRestore(ctx, db, post.ID); err != nil {
+        log.Fatalf("soft delete/restore: %v", err)
+    }
+
+    // Full-text search
+    if err := searchPosts(ctx, db, "Go"); err != nil {
+        log.Fatalf("search: %v", err)
+    }
+
+    // Serialize a user with posts to JSON
+    var alice User
+    if err := db.Model().With("Posts").Find(ctx, &alice, 1); err != nil {
+        log.Fatalf("find alice: %v", err)
+    }
+    json, err := ember.ToJSON(alice)
+    if err != nil {
+        log.Fatalf("serialize: %v", err)
+    }
+    fmt.Printf("Alice JSON: %s\n", string(json))
+}</code></pre>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

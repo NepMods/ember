@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ember — Laravel-Inspired ORM for Go</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">ember <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html" class="active">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a></div>
+
+    <div class="content">
+      <section class="hero">
+        <h1>ember</h1>
+        <p class="tagline">A full-featured, Laravel Eloquent-inspired ORM and query builder for Go.</p>
+        <div class="badges">
+          <span class="badge badge-purple">v2.0.0</span>
+          <span class="badge badge-green">Go 1.26+</span>
+          <span class="badge badge-blue">PostgreSQL</span>
+          <span class="badge badge-blue">MySQL</span>
+          <span class="badge badge-blue">SQLite3</span>
+          <span class="badge badge-orange">~3k LOC</span>
+        </div>
+        <div class="quick-links">
+          <a href="getting-started.html" class="btn-primary">Get Started</a>
+          <a href="api-reference.html" class="btn-outline">API Reference</a>
+          <a href="examples.html" class="btn-outline">Examples</a>
+          <a href="architecture.html" class="btn-outline">Architecture</a>
+          <a href="comparison.html" class="btn-outline">vs GORM/Bun/Ent</a>
+        </div>
+      </section>
+
+      <h2>Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <h3>Fluent Query Builder</h3>
+          <p>Chainable SELECT/INSERT/UPDATE/DELETE/UPSERT builder with WHERE, JOIN, GROUP BY, HAVING, ORDER BY, LIMIT/OFFSET, aggregates, chunking, and lock modes.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Active-Record Models</h3>
+          <p>Model layer with Create/Find/Save/Update/Delete/Restore/ForceDelete, automatic timestamps, soft deletes, lifecycle hooks, and eager loading.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Migration DSL</h3>
+          <p>Cross-dialect schema builder with Blueprint: ID, String, Integer, Text, JSON, Enum, Decimal, Timestamps, SoftDeletes, Foreign keys, Indexes. Supports Up/Down/Rollback/Fresh.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Master/Replica Routing</h3>
+          <p>Configurable master + N read replicas with round-robin load balancing. Sticky reads via context. All writes go to master; SELECTs balance across replicas.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Eager Loading</h3>
+          <p>N+1 prevention via <code>IN (...)</code> queries. Supports HasMany, HasOne, BelongsTo, BelongsToMany with nested relations. Declarative tag-based definition.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Attribute Casting</h3>
+          <p>Tag-based casting: <code>cast:json</code>, <code>cast:date</code>, <code>cast:datetime</code>, <code>cast:string</code>, <code>cast:int</code>, <code>cast:float</code>, <code>cast:bool</code>. Applied automatically on read/write.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Event System</h3>
+          <p>Observer-pattern event dispatcher with 10 lifecycle events (Creating/Created, Updating/Updated, Saving/Saved, Deleting/Deleted, Restoring/Restored). Per-model and global observers.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Global Scopes</h3>
+          <p>Registry-based scope system. Apply reusable query constraints per model type. Built-in scopes: ActiveScope, SoftDeleteScope, WithTrashedScope, OnlyTrashedScope.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Pagination</h3>
+          <p>Separate COUNT + SELECT approach. Builder.Paginate and ModelDB.Paginate with metadata (CurrentPage, LastPage, PerPage, Total, From, To).</p>
+        </div>
+        <div class="feature-card">
+          <h3>Raw SQL</h3>
+          <p>Execute raw queries with Scan, First, Get, Exec, Pluck, Value. Full binding support. Transaction-aware.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Builder Macros</h3>
+          <p>Extend the builder with custom methods. Per-instance via <code>Macro()</code> and global via <code>AddBuilderMacro()</code>. Dispatch with <code>Call()</code>.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Serialization</h3>
+          <p>ModelToMap, ToJSON, CollectionToMap, CollectionToJSON. Configurable date/datetime format. Timestamp and soft-delete filtering.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Connection Manager</h3>
+          <p>Named connection registry for multiple database groups. Thread-safe Add/Remove/CloseAll. Switch between 'default', 'reporting', 'archive' etc.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Transaction Support</h3>
+          <p>Begin/Commit/Rollback with savepoints. Transaction helper with auto-rollback on error. Builder and Raw methods fully work inside transactions.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Dialect Abstraction</h3>
+          <p>Interface-based dialect system. PostgreSQL, MySQL, SQLite3 built-in. Custom dialects via interface implementation. Proper quoting, placeholders, RETURNING, UPSERT.</p>
+        </div>
+      </div>
+
+      <div class="whats-new">
+        <h3>What's New in v2.0.0</h3>
+        <ul>
+          <li><span class="badge badge-green">New</span> Eager loading with <code>With()</code> — eliminate N+1 queries</li>
+          <li><span class="badge badge-green">New</span> Full migration DSL with Blueprint, foreign keys, indexes</li>
+          <li><span class="badge badge-green">New</span> Master/replica read-write splitting with sticky reads</li>
+          <li><span class="badge badge-green">New</span> Event system with 10 lifecycle hooks + Observer pattern</li>
+          <li><span class="badge badge-green">New</span> Global scopes, attribute casting, builder macros</li>
+          <li><span class="badge badge-purple">Docs</span> New <a href="faq.html">FAQ</a>, <a href="comparison.html">Comparison</a>, <a href="contributing.html">Contributing</a>, and <a href="changelog.html">Changelog</a> pages</li>
+        </ul>
+        <p style="margin:12px 0 0;font-size:.875rem">See the full <a href="changelog.html">changelog</a> for details.</p>
+      </div>
+
+      <h2 id="comparison">Quick Comparison</h2>
+      <p>ember vs other Go ORMs at a glance. See the <a href="comparison.html">full comparison page</a> for details.</p>
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="highlight-col">ember</th>
+            <th>GORM</th>
+            <th>Bun</th>
+            <th>Ent</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Package Size</td>
+            <td class="highlight-col">~3k LOC</td>
+            <td>~30k LOC</td>
+            <td>~15k LOC</td>
+            <td>~100k LOC</td>
+          </tr>
+          <tr>
+            <td>Dependencies</td>
+            <td class="highlight-col">1</td>
+            <td>~15</td>
+            <td>~10</td>
+            <td>~5 + codegen</td>
+          </tr>
+          <tr>
+            <td>Active Record</td>
+            <td class="highlight-col">Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>No (Data Mapper)</td>
+          </tr>
+          <tr>
+            <td>Migrations</td>
+            <td class="highlight-col">Built-in DSL</td>
+            <td>AutoMigrate</td>
+            <td>Built-in</td>
+            <td>Built-in</td>
+          </tr>
+          <tr>
+            <td>Read/Write Splitting</td>
+            <td class="highlight-col">Built-in</td>
+            <td>Plugin</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Code Generation</td>
+            <td class="highlight-col">Not needed</td>
+            <td>No</td>
+            <td>No</td>
+            <td>Required</td>
+          </tr>
+          <tr>
+            <td>Learning Curve</td>
+            <td class="highlight-col">Low</td>
+            <td>Low</td>
+            <td>Medium</td>
+            <td>High</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="cta-section">
+        <h3>Help Shape the Future of ember</h3>
+        <p>ember is an open-source project. Contributions, bug reports, and feature requests are welcome.</p>
+        <a href="contributing.html" class="btn-primary">Contributing Guide</a>
+        <a href="https://github.com/NepMods/ember" class="btn-outline">GitHub</a>
+        <a href="faq.html" class="btn-outline">FAQ</a>
+      </div>
+
+      <h2>Quick Start</h2>
+      <pre><code>import ember "github.com/NepMods/ember"
+
+// Open connection
+db, err := ember.Open(ember.Config{
+    Driver: "sqlite3",
+    Master: ":memory:",
+})
+defer db.Close()
+
+// Define model
+type User struct {
+    ID        int64      `ember:"primaryKey;autoIncr"`
+    Name      string
+    Email     string     `ember:"unique"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+}
+
+// Create
+u := &User{Name: "Alice", Email: "alice@example.com"}
+db.Model().Create(ctx, u)
+
+// Find
+var user User
+db.Model().Find(ctx, &user, 1)
+
+// Query
+var users []User
+db.Table("users").Where("email", "LIKE", "%@example.com").Get(ctx, &users)
+
+// Paginate
+paginator, _ := db.Table("users").Paginate(ctx, &users, 1, 15)
+
+// Migrate
+type CreateUsersTable struct{}
+func (m *CreateUsersTable) Version() string { return "2024_01_01_create_users" }
+func (m *CreateUsersTable) Up(s *ember.Schema) error {
+    return s.Create("users", func(t *ember.Blueprint) {
+        t.ID()
+        t.String("name")
+        t.String("email").Unique()
+        t.Timestamps()
+    })
+}
+func (m *CreateUsersTable) Down(s *ember.Schema) error {
+    return s.Drop("users")
+}
+migrator := ember.NewMigrator(db, &CreateUsersTable{})
+migrator.Run(ctx)</code></pre>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License &mdash; Built with Go</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

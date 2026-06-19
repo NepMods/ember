@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Changelog — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html" class="active">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; Changelog</div>
+
+    <div class="content">
+      <h1>Changelog</h1>
+      <p>All notable changes to ember are documented here. This project adheres to <a href="https://semver.org">Semantic Versioning</a> and follows the <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a> format.</p>
+
+      <div class="changelog-timeline">
+
+        <!-- ─── v2.0.0 ──────────────────────── -->
+        <div class="changelog-version">
+          <div class="version-badge">v2.0.0</div>
+          <div class="version-date">2026-03-15</div>
+        </div>
+
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Eager loading</strong> — Full <code>With()</code> implementation supporting HasMany, HasOne, BelongsTo, BelongsToMany with dot-notation nesting.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Migration DSL</strong> — Cross-dialect schema builder with Blueprint: ID, String, Integer, Text, JSON, Enum, Decimal, Timestamps, SoftDeletes, Foreign keys, Indexes.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Master/Replica routing</strong> — Configurable master + N read replicas with round-robin load balancing and sticky reads.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Event system</strong> — Observer-pattern dispatcher with 10 lifecycle events (Creating/Created, Updating/Updated, Saving/Saved, Deleting/Deleted, Restoring/Restored).
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Global scopes</strong> — Registry-based scope system with built-in ActiveScope, SoftDeleteScope, WithTrashedScope, OnlyTrashedScope.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Attribute casting</strong> — Tag-based <code>cast:json</code>, <code>cast:date</code>, <code>cast:datetime</code>, <code>cast:string</code>, <code>cast:int</code>, <code>cast:float</code>, <code>cast:bool</code>.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Builder macros</strong> — Per-instance and global extension mechanism for the query builder.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Serialization package</strong> — ModelToMap, ToJSON, CollectionToMap, CollectionToJSON with configurable date formats.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Connection Manager</strong> — Named connection registry supporting multiple database groups with thread-safe Add/Remove/CloseAll.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            <strong>Pagination</strong> — Separate COUNT + SELECT approach with metadata (CurrentPage, LastPage, PerPage, Total, From, To).
+          </div>
+        </div>
+        <div class="changelog-entry changelog-changed">
+          <span class="changelog-tag">Changed</span>
+          <div class="changelog-desc">
+            <strong>LoadBelongsTo now respects OwnerKey</strong> — v1 ignored the OwnerKey parameter; v2 resolves it from the relation definition.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-changed">
+          <span class="changelog-tag">Changed</span>
+          <div class="changelog-desc">
+            <strong>Default() is type-aware</strong> — auto-quotes strings, maps bools to 1/0, handles nil as NULL.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-fixed">
+          <span class="changelog-tag">Fixed</span>
+          <div class="changelog-desc">
+            SQLite TEXT(N) generation — now maps all text-like types to plain TEXT instead of invalid TEXT(255).
+          </div>
+        </div>
+        <div class="changelog-entry changelog-removed">
+          <span class="changelog-tag">Removed</span>
+          <div class="changelog-desc">
+            Dead <code>Builder.bindings</code> field removed.
+          </div>
+        </div>
+
+        <!-- ─── v1.0.0 ──────────────────────── -->
+        <div class="changelog-version">
+          <div class="version-badge">v1.0.0</div>
+          <div class="version-date">2025-06-01</div>
+        </div>
+
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Fluent query builder with full SELECT/INSERT/UPDATE/DELETE/UPSERT support.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Active-record ModelDB with Create/Find/Save/Update/Delete.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Dialect interface with PostgreSQL, MySQL, and SQLite3 implementations.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Struct tag parsing (<code>ember:"column:...;primaryKey;autoIncr"</code>).
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Transaction support with Commit/Rollback.
+          </div>
+        </div>
+
+        <!-- ─── v0.1.0 ──────────────────────── -->
+        <div class="changelog-version">
+          <div class="version-badge">v0.1.0</div>
+          <div class="version-date">2025-01-15</div>
+        </div>
+
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Initial preview release. Core query builder with basic CRUD operations.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            SQLite3 driver support with in-memory testing capability.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-added">
+          <span class="changelog-tag">Added</span>
+          <div class="changelog-desc">
+            Basic model definition through Go structs.
+          </div>
+        </div>
+
+        <!-- ─── v2.1.0 (Planned) ──────────────────── -->
+        <div class="changelog-version">
+          <div class="version-badge planned">v2.1.0</div>
+          <div class="version-date">Planned</div>
+        </div>
+
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Planned</span>
+          <div class="changelog-desc">
+            Model factory support for test data generation (Laravel-style Factory).
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Planned</span>
+          <div class="changelog-desc">
+            Polymorphic relationship test coverage and eager loading support.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Planned</span>
+          <div class="changelog-desc">
+            Migration file auto-discovery and filesystem scanning.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Planned</span>
+          <div class="changelog-desc">
+            Improved JSON serialization with custom tags.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Planned</span>
+          <div class="changelog-desc">
+            Embedded/anonymous struct field support in ParseSchema.
+          </div>
+        </div>
+
+        <!-- ─── v3.0.0 (Roadmap) ──────────────────── -->
+        <div class="changelog-version">
+          <div class="version-badge roadmap">v3.0.0</div>
+          <div class="version-date">Roadmap</div>
+        </div>
+
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Roadmap</span>
+          <div class="changelog-desc">
+            PostgreSQL and MySQL integration test suites (currently SQLite-only).
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Roadmap</span>
+          <div class="changelog-desc">
+            Concurrent builder safety through immutable query AST.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Roadmap</span>
+          <div class="changelog-desc">
+            Native SQLCipher and CockroachDB dialect support.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Roadmap</span>
+          <div class="changelog-desc">
+            Observability integrations: OpenTelemetry tracing and Prometheus metrics.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Roadmap</span>
+          <div class="changelog-desc">
+            Zero-copy scan API for high-throughput scenarios.
+          </div>
+        </div>
+        <div class="changelog-entry changelog-planned">
+          <span class="changelog-tag">Roadmap</span>
+          <div class="changelog-desc">
+            Multi-tenant schema support with automatic tenant isolation.
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

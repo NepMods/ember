@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FAQ — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html" class="active">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; FAQ</div>
+
+    <div class="content">
+      <h1>Frequently Asked Questions</h1>
+      <p>Common questions about ember's features, performance, threading, and ecosystem.</p>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#q1">What databases does ember support?</a></li>
+          <li class="toc-h2"><a href="#q2">How does ember compare with GORM, Bun, or Ent?</a></li>
+          <li class="toc-h2"><a href="#q3">Is ember thread-safe?</a></li>
+          <li class="toc-h2"><a href="#q4">Does ember support connection pooling?</a></li>
+          <li class="toc-h2"><a href="#q5">Does ember support database migrations?</a></li>
+          <li class="toc-h2"><a href="#q6">How does eager loading prevent N+1 queries?</a></li>
+          <li class="toc-h2"><a href="#q7">Does ember support transactions?</a></li>
+          <li class="toc-h2"><a href="#q8">Can I use raw SQL with ember?</a></li>
+          <li class="toc-h2"><a href="#q9">Does ember support soft deletes?</a></li>
+          <li class="toc-h2"><a href="#q10">How do I define model relationships?</a></li>
+          <li class="toc-h2"><a href="#q11">Is there pagination support?</a></li>
+          <li class="toc-h2"><a href="#q12">Can I use multiple database connections?</a></li>
+          <li class="toc-h2"><a href="#q13">How does the event/hook system work?</a></li>
+          <li class="toc-h2"><a href="#q14">How does attribute casting work?</a></li>
+          <li class="toc-h2"><a href="#q15">How does master/replica routing work?</a></li>
+          <li class="toc-h2"><a href="#q16">Can I extend the query builder with custom methods?</a></li>
+          <li class="toc-h2"><a href="#q17">Does ember have global scopes?</a></li>
+          <li class="toc-h2"><a href="#q18">What is ember's testing strategy?</a></li>
+          <li class="toc-h2"><a href="#q19">Is ember production-ready?</a></li>
+          <li class="toc-h2"><a href="#q20">How do I serialize models to JSON?</a></li>
+        </ul>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item" id="q1">
+          <div class="faq-question">What databases does ember support?</div>
+          <div class="faq-answer">
+            <p>ember supports three databases out of the box:</p>
+            <ul>
+              <li><strong>PostgreSQL</strong> — via <code>lib/pq</code> or <code>pgx</code> driver. Quoting with <code>"identifier"</code>, <code>$N</code> placeholders, supports <code>RETURNING</code> and full <code>ON CONFLICT DO UPDATE</code> UPSERT.</li>
+              <li><strong>MySQL</strong> — via <code>go-sql-driver/mysql</code>. Quoting with <code>`identifier`</code>, <code>?</code> placeholders, <code>ON DUPLICATE KEY UPDATE</code> UPSERT.</li>
+              <li><strong>SQLite3</strong> — via <code>mattn/go-sqlite3</code>. Quoting with <code>"identifier"</code>, <code>?</code> placeholders, supports <code>RETURNING</code> (3.35+), <code>ON CONFLICT</code> UPSERT.</li>
+            </ul>
+            <p>Additional databases can be added by implementing the <code>Dialect</code> interface and registering in <code>GetDialect()</code>.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q2">
+          <div class="faq-question">How does ember compare with GORM, Bun, or Ent?</div>
+          <div class="faq-answer">
+            <p>See the <a href="comparison.html">detailed comparison page</a> for a full breakdown. Key differentiators:</p>
+            <ul>
+              <li><strong>Flat package</strong> — No sub-packages, no import chains. One <code>import ember "..."</code> for everything.</li>
+              <li><strong>Laravel Eloquent inspiration</strong> — Familiar API for developers coming from Laravel/PHP.</li>
+              <li><strong>Master/replica routing</strong> — Built-in read/write splitting, not available in GORM without middleware.</li>
+              <li><strong>~3,000 LOC</strong> — Significantly smaller than GORM (~30k LOC) or Ent (~100k LOC with codegen).</li>
+              <li><strong>Tag-based everything</strong> — Relationships, casting, columns all use struct tags. No verbose method chaining.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q3">
+          <div class="faq-question">Is ember thread-safe?</div>
+          <div class="faq-answer">
+            <p>Thread safety varies by component:</p>
+            <table>
+              <tr><th>Component</th><th>Safe?</th></tr>
+              <tr><td><code>DB</code> (master + replicas)</td><td>Yes — <code>*sql.DB</code> is safe, replica index uses <code>atomic.AddUint64</code></td></tr>
+              <tr><td><code>ConnectionManager</code></td><td>Yes — <code>sync.RWMutex</code> on all operations</td></tr>
+              <tr><td><code>EventDispatcher</code></td><td>Yes — <code>sync.RWMutex</code> on observe/fire</td></tr>
+              <tr><td><code>ScopeRegistry</code></td><td>Yes — <code>sync.RWMutex</code> on add/get</td></tr>
+              <tr><td>Schema cache</td><td>Yes — <code>sync.RWMutex</code>, read-locked on fast path</td></tr>
+              <tr><td>Global macros</td><td>Yes — <code>sync.RWMutex</code> on add/call</td></tr>
+              <tr><td><code>Builder</code></td><td><strong>No</strong> — single-goroutine only. Clone for parallel branches.</td></tr>
+              <tr><td><code>ModelDB</code></td><td><strong>No</strong> — inherits Builder's lack of safety.</td></tr>
+            </table>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q4">
+          <div class="faq-question">Does ember support connection pooling?</div>
+          <div class="faq-answer">
+            <p>Yes. The <code>PoolConfig</code> struct exposes all <code>database/sql</code> pool settings:</p>
+            <pre><code>db, err := ember.Open(ember.Config{
+    Driver: "postgres",
+    Master: "postgres://user:pass@localhost/mydb",
+    Pool: ember.PoolConfig{
+        MaxOpenConns:    25,
+        MaxIdleConns:    10,
+        ConnMaxLifetime: 5 * time.Minute,
+    },
+})</code></pre>
+            <p>Pool settings apply to both master and replica <code>*sql.DB</code> handles. Go's <code>database/sql</code> manages the underlying connection pool transparently.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q5">
+          <div class="faq-question">Does ember support database migrations?</div>
+          <div class="faq-answer">
+            <p>Yes. ember includes a complete migration framework with a cross-dialect schema builder:</p>
+            <ul>
+              <li>Define migrations by implementing the <code>Migration</code> interface (<code>Version()</code>, <code>Up()</code>, <code>Down()</code>).</li>
+              <li>Use <code>Blueprint</code> for type-safe column definitions: <code>t.ID()</code>, <code>t.String("name")</code>, <code>t.Timestamps()</code>, <code>t.SoftDeletes()</code>, etc.</li>
+              <li>Run/rollback/fresh through <code>Migrator.Run()</code>, <code>Migrator.Rollback()</code>, <code>Migrator.Fresh()</code>.</li>
+              <li>Check status with <code>Migrator.Status()</code> and <code>Migrator.Pending()</code>.</li>
+              <li>Supports foreign keys, indexes, custom column types, and raw DDL.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q6">
+          <div class="faq-question">How does eager loading prevent N+1 queries?</div>
+          <div class="faq-answer">
+            <p>ember uses a two-query approach instead of JOINs:</p>
+            <ol>
+              <li>Query 1: <code>SELECT * FROM users</code> — fetch parent records.</li>
+              <li>For each relation, collect parent keys and execute one query: <code>SELECT * FROM posts WHERE user_id IN (1, 2, 3, ...)</code>.</li>
+              <li>Results are grouped in memory by foreign key and assigned to parent struct fields via reflection.</li>
+            </ol>
+            <p>This produces two simple queries instead of one complex JOIN, avoids row duplication from join fan-out, works correctly with LIMIT, and is easier to debug in database logs.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q7">
+          <div class="faq-question">Does ember support transactions?</div>
+          <div class="faq-answer">
+            <p>Yes, with two patterns:</p>
+            <pre><code>// Auto-rollback on error
+err := db.Transaction(ctx, func(tx *ember.Tx) error {
+    tx.Table("accounts").Decrement(ctx, "balance", 100)
+    tx.Table("accounts").Increment(ctx, "balance", 100)
+    return nil
+})
+
+// Manual with savepoints
+tx, _ := db.Begin(ctx, nil)
+tx.Savepoint(ctx, "sp1")
+// ... operations ...
+tx.RollbackTo(ctx, "sp1")
+tx.Commit()</code></pre>
+            <p>Transaction methods support Builder, ModelDB, and RawQuery within the transaction scope. The helper <code>Transaction()</code> is panic-safe — deferred recovery rolls back and re-panics.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q8">
+          <div class="faq-question">Can I use raw SQL with ember?</div>
+          <div class="faq-answer">
+            <p>Yes. The <code>RawQuery</code> type supports full raw SQL execution:</p>
+            <pre><code>// Single row
+var user User
+db.Raw("SELECT * FROM users WHERE id = ?", 1).First(ctx, &user)
+
+// Multiple rows
+var users []User
+db.Raw("SELECT * FROM users WHERE age > ?", 18).Scan(ctx, &users)
+
+// Exec with result
+result, _ := db.Raw("UPDATE users SET status = ?", "active").Exec(ctx)
+
+// Get affected rows
+count, _ := db.Raw("DELETE FROM users WHERE status = ?", "deleted").ExecAffected(ctx)
+
+// Single column
+var emails []string
+db.Raw("SELECT email FROM users").Pluck(ctx, &emails)
+
+// Single value
+var count int64
+db.Raw("SELECT COUNT(*) FROM users").Value(ctx, &count)</code></pre>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q9">
+          <div class="faq-question">Does ember support soft deletes?</div>
+          <div class="faq-answer">
+            <p>Yes. If a model has a <code>deleted_at</code> field (type <code>*time.Time</code> with tag <code>ember:"nullable"</code>), ember automatically enables soft deletes:</p>
+            <ul>
+              <li><code>Delete()</code> sets <code>deleted_at</code> to the current time instead of removing the row.</li>
+              <li><code>ForceDelete()</code> permanently removes the record.</li>
+              <li><code>Restore()</code> clears <code>deleted_at</code>.</li>
+              <li>All SELECT queries automatically include <code>WHERE deleted_at IS NULL</code> via <code>SoftDeleteScope</code>.</li>
+              <li>Use <code>WithTrashedScope()</code> to include soft-deleted records, or <code>OnlyTrashedScope()</code> to fetch only deleted records.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q10">
+          <div class="faq-question">How do I define model relationships?</div>
+          <div class="faq-answer">
+            <p>Relationships are declared using <code>ember</code> struct tags on the model fields:</p>
+            <pre><code>type User struct {
+    ID      int64   `ember:"primaryKey;autoIncr"`
+    Name    string
+    Posts   []Post  `ember:"relation:hasMany;foreignKey:user_id;localKey:id"`
+    Profile Profile `ember:"relation:hasOne;foreignKey:user_id;localKey:id"`
+}
+
+type Post struct {
+    ID     int64  `ember:"primaryKey;autoIncr"`
+    UserID int64  `ember:"column:user_id"`
+    Author User   `ember:"relation:belongsTo;foreignKey:user_id;ownerKey:id"`
+    Tags   []Tag  `ember:"relation:belongsToMany;pivot:post_tags;pivotFK:post_id;pivotRK:tag_id"`
+}</code></pre>
+            <p>Supported relation types: <code>hasMany</code>, <code>hasOne</code>, <code>belongsTo</code>, <code>belongsToMany</code>. Relations can be loaded eagerly via <code>With()</code> or individually via <code>LoadHasMany()</code>/<code>LoadHasOne()</code>/<code>LoadBelongsTo()</code>/<code>LoadBelongsToMany()</code>.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q11">
+          <div class="faq-question">Is there pagination support?</div>
+          <div class="faq-answer">
+            <p>Yes. The <code>Paginate()</code> method works on both <code>Builder</code> and <code>ModelDB</code>:</p>
+            <pre><code>var page []Product
+paginator, err := db.Table("products").
+    Where("status", "=", "active").
+    OrderBy("id", "ASC").
+    Paginate(ctx, &page, 1, 20)
+
+fmt.Printf("Page %d of %d (total: %d)\n",
+    paginator.CurrentPage, paginator.LastPage, paginator.Total)</code></pre>
+            <p>The paginator runs <code>COUNT(*)</code> first, then <code>SELECT ... LIMIT/OFFSET</code>. This approach is database-agnostic and avoids the deprecated MySQL <code>SQL_CALC_FOUND_ROWS</code>. Metadata includes <code>CurrentPage</code>, <code>LastPage</code>, <code>PerPage</code>, <code>Total</code>, <code>From</code>, and <code>To</code>.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q12">
+          <div class="faq-question">Can I use multiple database connections?</div>
+          <div class="faq-answer">
+            <p>Yes. The <code>ConnectionManager</code> provides a thread-safe registry of named <code>*DB</code> connections:</p>
+            <pre><code>mgr := ember.NewConnectionManager()
+mgr.Add("default", defaultConfig)
+mgr.Add("reporting", reportingConfig)
+mgr.Add("archive", archiveConfig)
+
+// Switch between connections
+db := mgr.Connection("reporting")
+db.Table("sales").Get(ctx, &results)
+
+// Close all connections
+mgr.CloseAll()</code></pre>
+            <p>The connection manager supports <code>Add()</code>, <code>Remove()</code>, <code>Connection()</code>, <code>ConnectionSafe()</code>, <code>SetDefault()</code>, <code>Names()</code>, and <code>CloseAll()</code>. All operations are protected by <code>sync.RWMutex</code>.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q13">
+          <div class="faq-question">How does the event/hook system work?</div>
+          <div class="faq-answer">
+            <p>ember has two complementary event systems:</p>
+            <p><strong>1. Observer Pattern (EventDispatcher):</strong></p>
+            <pre><code>dispatcher := ember.NewEventDispatcher()
+dispatcher.Observe(&User{}, &AuditObserver{})
+dispatcher.ObserveAll(&GlobalObserver{})
+db.SetEventDispatcher(dispatcher)</code></pre>
+            <p><strong>2. Hook Interfaces (per-model):</strong></p>
+            <pre><code>func (u *User) BeforeCreate(ctx context.Context) error {
+    if u.Name == "" { return fmt.Errorf("name required") }
+    return nil
+}</code></pre>
+            <p>Available hooks: <code>BeforeCreate</code>, <code>AfterCreate</code>, <code>BeforeSave</code>, <code>AfterSave</code>, <code>BeforeUpdate</code>, <code>AfterUpdate</code>, <code>BeforeDelete</code>, <code>AfterDelete</code>. The event lifecycle order is deterministic: Saving → Creating → BeforeSave → BeforeCreate → SQL → AfterCreate → AfterSave → Created → Saved (for creates).</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q14">
+          <div class="faq-question">How does attribute casting work?</div>
+          <div class="faq-answer">
+            <p>Attribute casting is defined via struct tags. Casting is applied automatically on both read (from DB → struct) and write (struct → DB):</p>
+            <pre><code>type Product struct {
+    ID       int64                  `ember:"primaryKey;autoIncr"`
+    Metadata map[string]interface{} `ember:"cast:json"`
+    Price    float64                `ember:"cast:float"`
+    IsActive bool                   `ember:"cast:bool"`
+    Birthday time.Time              `ember:"cast:date"`
+    CreatedAt time.Time             `ember:"cast:datetime"`
+}</code></pre>
+            <p>Supported cast types: <code>json</code>, <code>string</code>, <code>int</code>, <code>float</code>, <code>bool</code>, <code>date</code>, <code>datetime</code>. JSON fields are automatically marshaled/unmarshaled. Date fields use the configured format (default RFC3339).</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q15">
+          <div class="faq-question">How does master/replica routing work?</div>
+          <div class="faq-answer">
+            <p>The <code>DB</code> struct manages one master <code>*sql.DB</code> and N replica <code>*sql.DB</code> handles:</p>
+            <ul>
+              <li><strong>Writes</strong> (INSERT, UPDATE, DELETE, DDL) always go to the master connection.</li>
+              <li><strong>Reads</strong> (SELECT) are load-balanced across replicas using round-robin via <code>atomic.AddUint64</code>.</li>
+              <li><strong>Sticky reads</strong>: Use <code>ember.WithStickyMaster(ctx)</code> to force reads to master after a write, ensuring read-your-writes consistency.</li>
+              <li><strong>FOR UPDATE</strong>: Queries with lock modes (<code>LockForUpdate()</code>, <code>SharedLock()</code>) always route to master.</li>
+              <li>If no replicas are configured, all reads go to master.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q16">
+          <div class="faq-question">Can I extend the query builder with custom methods?</div>
+          <div class="faq-answer">
+            <p>Yes, through the macro system. Macros can be per-instance or global:</p>
+            <pre><code>// Per-instance macro
+builder := db.Table("users")
+builder.Macro("whereActive", func(b *ember.Builder, args ...interface{}) interface{} {
+    return b.Where("status", "=", "active")
+})
+result, err := builder.Call("whereActive")
+if err != nil {
+    log.Fatalf("macro call failed: %v", err)
+}
+if b, ok := result.(*ember.Builder); ok {
+    b.Get(ctx, &users)
+}
+
+// Global macro (available on all builders)
+ember.AddBuilderMacro("activeOnly", func(b *ember.Builder, args ...interface{}) interface{} {
+    return b.Where("status", "=", "active")
+})
+result, err = db.Table("products").Call("activeOnly")
+if err != nil {
+    log.Fatalf("macro call failed: %v", err)
+}
+if b, ok := result.(*ember.Builder); ok {
+    b.Get(ctx, &products)
+}</code></pre>
+            <p>Global macros are thread-safe (<code>sync.RWMutex</code>). Per-instance macros are local to a specific <code>Builder</code>. The <code>Call()</code> method falls back from instance macros to global macros.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q17">
+          <div class="faq-question">Does ember have global scopes?</div>
+          <div class="faq-answer">
+            <p>Yes. Global scopes are reusable query constraints registered per model type via the <code>ScopeRegistry</code>:</p>
+            <pre><code>// Define scope
+func ActiveOnly(b *ember.Builder) *ember.Builder {
+    return b.Where("status", "=", "active")
+}
+
+// Register as global scope
+db.ScopeRegistry().Add(&Product{}, ActiveOnly)
+
+// Now ALL Product queries automatically include WHERE status = 'active'
+db.Model().All(ctx, &products)  // includes scope
+db.Model().Find(ctx, &product, 1)  // includes scope</code></pre>
+            <p>Built-in scopes: <code>ActiveScope</code>, <code>SoftDeleteScope</code>, <code>WithTrashedScope()</code>, <code>OnlyTrashedScope()</code>. Scopes can also be applied directly via <code>ember.ApplyScopes()</code>.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q18">
+          <div class="faq-question">What is ember's testing strategy?</div>
+          <div class="faq-answer">
+            <p>All integration tests use <strong>SQLite in-memory</strong> (<code>:memory:</code>) — zero setup, fast, deterministic. Tests run in approximately 1–3 seconds with no external database daemon required.</p>
+            <ul>
+              <li>Dialect-specific SQL is tested via <code>ToSQL()</code> output comparison.</li>
+              <li>All three dialects are tested in blueprint schema generation.</li>
+              <li>Tests use the <code>ember_test</code> external package to exercise the public API as a real consumer.</li>
+              <li>Tests cover: CRUD, queries, transactions, migrations, relationships, eager loading, pagination, serialization, events, scopes, macros, casting, connection manager, and raw SQL.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q19">
+          <div class="faq-question">Is ember production-ready?</div>
+          <div class="faq-answer">
+            <p>ember v2.0.0 is a stable, documented, and tested release with full CI pipelines. However, consider these factors:</p>
+            <ul>
+              <li><strong>Test coverage</strong>: Comprehensive (100+ test cases) but SQLite-only. No PostgreSQL/MySQL integration tests in CI.</li>
+              <li><strong>Community</strong>: Single-contributor project. Response times depend on maintainer availability.</li>
+              <li><strong>Ecosystem</strong>: No third-party plugins, no code generation tooling, no model factories yet.</li>
+              <li><strong>Performance</strong>: ~3,000 LOC flat package is lean. Builder is not safe for concurrent use. Schema introspection is cached with <code>sync.RWMutex</code>.</li>
+              <li><strong>Migration safety</strong>: The migration DSL supports Up/Down/Fresh, but there is no dry-run mode or automatic backup.</li>
+            </ul>
+            <p>It is suitable for small-to-medium projects, APIs, and internal tools. For high-throughput or multi-team projects, evaluate against GORM or Ent.</p>
+          </div>
+        </div>
+
+        <div class="faq-item" id="q20">
+          <div class="faq-question">How do I serialize models to JSON?</div>
+          <div class="faq-answer">
+            <p>ember provides standalone serialization functions:</p>
+            <pre><code>// Single model to JSON
+jsonBytes, err := ember.ToJSON(user)
+
+// Collection to JSON
+jsonBytes, err = ember.CollectionToJSON(users)
+
+// Single model to map
+m, err := ember.ModelToMap(user)
+
+// Collection to maps
+maps, err := ember.CollectionToMap(users)
+
+// With custom config
+cfg := &ember.SerializationConfig{
+    DateFormat:        "2006-01-02",
+    DateTimeFormat:    "2006-01-02 15:04:05",
+    IncludeTimestamps: false,
+    IncludeSoftDelete: false,
+}
+m, err := ember.ModelToMapWithConfig(user, cfg)</code></pre>
+            <p>Serialization respects casting: JSON columns are unmarshaled into <code>map[string]interface{}</code>, dates are formatted according to config, and timestamps/soft-delete fields can be filtered. The <code>FillFromMap()</code> function reverses the process, populating a struct from a column→value map.</p>
+          </div>
+        </div>
+
+      </div>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

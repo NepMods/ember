@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>API Reference — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html" class="active">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; API Reference</div>
+
+    <div class="content">
+      <h1>API Reference</h1>
+      <p>Complete reference for every exported symbol in ember v2.0.0.</p>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#types-db">DB</a></li>
+          <li class="toc-h2"><a href="#types-builder">Builder</a></li>
+          <li class="toc-h2"><a href="#types-modeldb">ModelDB</a></li>
+          <li class="toc-h2"><a href="#types-rawquery">RawQuery</a></li>
+          <li class="toc-h2"><a href="#types-tx">Tx</a></li>
+          <li class="toc-h2"><a href="#types-config">Config &amp; PoolConfig</a></li>
+          <li class="toc-h2"><a href="#types-schema">Schema (Migration DSL)</a></li>
+          <li class="toc-h2"><a href="#types-migrator">Migrator</a></li>
+          <li class="toc-h2"><a href="#types-blueprint">Blueprint</a></li>
+          <li class="toc-h2"><a href="#types-connectionmanager">ConnectionManager</a></li>
+          <li class="toc-h2"><a href="#types-paginator">Paginator</a></li>
+          <li class="toc-h2"><a href="#types-eventdispatcher">EventDispatcher</a></li>
+          <li class="toc-h2"><a href="#types-scoperegistry">ScopeRegistry</a></li>
+          <li class="toc-h2"><a href="#types-dialect">Dialect (Interface)</a></li>
+          <li class="toc-h2"><a href="#types-migration">Migration (Interface)</a></li>
+          <li class="toc-h2"><a href="#types-observer">Observer (Interface)</a></li>
+          <li class="toc-h2"><a href="#types-hooks">Hook Interfaces</a></li>
+          <li class="toc-h2"><a href="#functions-standalone">Standalone Functions</a></li>
+          <li class="toc-h2"><a href="#errors">Sentinel Errors</a></li>
+          <li class="toc-h2"><a href="#constants">Constants &amp; Types</a></li>
+          <li class="toc-h2"><a href="#types-parsing">Schema Types</a></li>
+          <li class="toc-h2"><a href="#types-serialization">Serialization Config</a></li>
+        </ul>
+      </div>
+
+      <!-- ─── DB ────────────────────────────────── -->
+      <h2 id="types-db">DB</h2>
+      <p>Core database handle managing master + replica connections. Created via <code>Open()</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func Open(cfg Config) (*DB, error)</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body">
+            <p>Initializes a DB handle with one master + N replicas. Pings all connections before returning. Returns error if master DSN is unreachable.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Close() error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Closes all database connections (master and replicas).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Ping(ctx context.Context) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Verifies connectivity to master and all replicas.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Dialect() Dialect</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns the SQL dialect for this connection.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Master() *sql.DB</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns the underlying master <code>*sql.DB</code> for advanced use.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Table(name string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Starts a fluent query builder for the given table name.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Raw(sql string, bindings ...interface{}) *RawQuery</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Starts a raw SQL query that will execute against the DB.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Model() *ModelDB</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns a ModelDB scoped to this connection for active-record operations.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Begin(ctx context.Context, opts *sql.TxOptions) (*Tx, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Starts a transaction on master. Always uses master for consistency.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) Transaction(ctx context.Context, fn func(tx *Tx) error) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes fn within a transaction. Auto-rollback on error, auto-commit on success. Panic-safe.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) TransactionWithOptions(ctx context.Context, opts *sql.TxOptions, fn func(tx *Tx) error) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Like Transaction but with custom <code>sql.TxOptions</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) ScopeRegistry() *ScopeRegistry</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns the global scope registry for this DB connection.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) SetEventDispatcher(ed *EventDispatcher)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Sets the event dispatcher for this DB connection.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) EventDispatcher() *EventDispatcher</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns the event dispatcher for this connection.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) ExecContext(ctx context.Context, query string, args ...interface{}) (sql.Result, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes a mutation (INSERT/UPDATE/DELETE) on master.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) QueryContext(ctx context.Context, query string, args ...interface{}) (*sql.Rows, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes a SELECT on a replica (or master if sticky/FOR UPDATE).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (db *DB) QueryRowContext(ctx context.Context, query string, args ...interface{}) *queryRow</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes a single-row SELECT on a replica.</p></div>
+        </div>
+      </div>
+
+      <!-- ─── Builder ────────────────────────────────── -->
+      <h2 id="types-builder">Builder</h2>
+      <p>Fluent SQL query builder. <strong>Not safe for concurrent use.</strong> Created via <code>DB.Table()</code> or <code>Tx.Table()</code>.</p>
+
+      <h3>SELECT Clauses</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Select(columns ...string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Sets columns to select. Replaces default <code>"*"</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) SelectRaw(expr string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Appends a raw expression (e.g. <code>COUNT(*) AS cnt</code>) to SELECT.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) AddSelect(columns ...string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Appends columns to existing SELECT.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Distinct() *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds DISTINCT to SELECT.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) From(table string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Sets/overrides the table name.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) As(alias string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Sets a table alias (<code>SELECT * FROM t AS alias</code>).</p></div>
+        </div>
+      </div>
+
+      <h3>WHERE Clauses</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Where(col, op string, val interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body">
+            <p>Adds AND condition. Supported operators: <code>=</code>, <code>!=</code>, <code>&lt;&gt;</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>, <code>LIKE</code>, <code>NOT LIKE</code>, <code>ILIKE</code>, <code>~</code>, <code>!~</code>, <code>REGEXP</code>. Invalid operators silently default to <code>=</code>.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) OrWhere(col, op string, val interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds OR condition.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereRaw(expr string, args ...interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds raw AND WHERE fragment. Caller responsible for safe SQL.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) OrWhereRaw(expr string, args ...interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds raw OR WHERE fragment.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereGroup(fn func(*Builder)) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds nested AND group: <code>AND ( ... )</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) OrWhereGroup(fn func(*Builder)) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds nested OR group: <code>OR ( ... )</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereIn(col string, values ...interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds <code>WHERE col IN (values)</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereNotIn(col string, values ...interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds <code>WHERE col NOT IN (values)</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereNull(col string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds <code>WHERE col IS NULL</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereNotNull(col string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds <code>WHERE col IS NOT NULL</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereBetween(col string, low, high interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds <code>WHERE col BETWEEN low AND high</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) WhereColumn(col1, op, col2 string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Compares two columns: <code>WHERE col1 op col2</code>.</p></div>
+        </div>
+      </div>
+
+      <h3>JOIN</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Join(table, first, op, second string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds INNER JOIN <code>ON first op second</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) LeftJoin(table, first, op, second string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds LEFT JOIN.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) RightJoin(table, first, op, second string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds RIGHT JOIN.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) CrossJoin(table string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds CROSS JOIN (no ON clause).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) JoinRaw(joinType, table, rawOn string, args ...interface{}) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds a join with a raw ON expression containing bind parameters.</p></div>
+        </div>
+      </div>
+
+      <h3>GROUP BY / HAVING</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) GroupBy(columns ...string) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) GroupByRaw(expr string) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Having(col, op string, val interface{}) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) HavingRaw(expr string, args ...interface{}) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>ORDER BY</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) OrderBy(col, dir string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds ORDER BY. Direction: <code>ASC</code> or <code>DESC</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) OrderByRaw(expr string) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Latest(col ...string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Shortcut for <code>OrderBy("created_at", "DESC")</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Oldest(col ...string) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Shortcut for <code>OrderBy("created_at", "ASC")</code>.</p></div>
+        </div>
+      </div>
+
+      <h3>LIMIT / OFFSET</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Limit(n int) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Offset(n int) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Take(n int) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Alias for Limit.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Skip(n int) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Alias for Offset.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) ForPage(page, perPage int) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Sets LIMIT+OFFSET for 1-indexed page number.</p></div>
+        </div>
+      </div>
+
+      <h3>Lock Modes</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) LockForUpdate() *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) SharedLock() *Builder</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>Aggregates</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Count(ctx context.Context) (int64, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Sum(ctx context.Context, column string) (float64, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Avg(ctx context.Context, column string) (float64, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Min(ctx context.Context, column string) (float64, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Max(ctx context.Context, column string) (float64, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Exists(ctx context.Context) (bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) DoesntExist(ctx context.Context) (bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>Query Execution</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Get(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes SELECT, scans all rows into <code>*[]SomeStruct</code> or <code>*[]map[string]interface{}</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) First(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes SELECT with LIMIT 1, scans into struct. Returns <code>ErrNotFound</code> if no rows.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Find(ctx context.Context, id interface{}, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Retrieves a record by primary key. Assumes <code>"id"</code> unless overridden by tag.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Pluck(ctx context.Context, column string, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Scans a single column into <code>*[]T</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Value(ctx context.Context, column string, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns a single column value from the first row.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Chunk(ctx context.Context, size int, fn func([]map[string]interface{}) bool) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Processes results in batches. Return <code>false</code> from fn to stop early. Automatically sets sticky master after each chunk.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) ToSQL() (string, []interface{})</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Compiles the builder into a SQL SELECT string and bindings.</p></div>
+        </div>
+      </div>
+
+      <h3>INSERT</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Insert(ctx context.Context, data map[string]interface{}) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Inserts a single row. Returns last inserted ID (0 for Postgres).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) InsertBatch(ctx context.Context, rows []map[string]interface{}) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Batch inserts multiple rows. All rows must have identical columns.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) InsertGetId(ctx context.Context, data map[string]interface{}, idColumn string) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Inserts a row and returns the generated ID. Uses RETURNING for Postgres.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Upsert(ctx context.Context, data map[string]interface{}, conflictCols, updateCols []string) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>INSERT ... ON CONFLICT ... DO UPDATE. Dialect-specific UPSERT implementation.</p></div>
+        </div>
+      </div>
+
+      <h3>UPDATE / DELETE</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Update(ctx context.Context, data map[string]interface{}) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Updates rows matching WHERE clauses. Returns affected rows.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Increment(ctx context.Context, column string, amount ...int) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Increments column by amount (default 1).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Decrement(ctx context.Context, column string, amount ...int) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Decrements column by amount (default 1).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Delete(ctx context.Context) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Deletes rows matching WHERE. Returns affected rows. Requires at least one WHERE clause.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Truncate(ctx context.Context) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Removes all rows. For MySQL, temporarily disables FK checks.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Paginate(ctx context.Context, dest interface{}, page, perPage int) (*Paginator, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Paginated query with total count + LIMIT/OFFSET.</p></div>
+        </div>
+      </div>
+
+      <h3>Macros</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Macro(name string, fn BuilderMacro) *Builder</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Registers a per-instance builder macro.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Builder) Call(name string, args ...interface{}) (interface{}, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Dispatches a macro by name. Falls back to global macros.</p></div>
+        </div>
+      </div>
+
+      <!-- ─── ModelDB ────────────────────────────────── -->
+      <h2 id="types-modeldb">ModelDB</h2>
+      <p>Active-record-style model API. Created via <code>DB.Model()</code> or <code>Tx.Model()</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Create(ctx context.Context, model interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Inserts model, populates ID and timestamps. Fires Saving → Creating events, runs BeforeSave → BeforeCreate hooks, executes INSERT, runs AfterCreate → AfterSave hooks, then fires Created → Saved events.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Save(ctx context.Context, model interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Creates if PK is zero, otherwise updates. Fires full event lifecycle.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Update(ctx context.Context, model interface{}, changedCols ...string) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Updates model. If changedCols are specified, only those columns are updated. Requires PK to be set.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Find(ctx context.Context, model interface{}, id interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Retrieves record by PK. Applies global scopes, soft-delete filtering, and eager loading.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) First(ctx context.Context, model interface{}, fn ...func(*Builder)) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Retrieves first matching record. Applies scopes, soft-delete, eager loading.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) All(ctx context.Context, dest interface{}, fn ...func(*Builder)) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Retrieves all records into <code>*[]T</code>. Applies scopes, soft-delete, eager loading.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Where(ctx context.Context, dest interface{}, fn func(*Builder)) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Shorthand for <code>All(ctx, dest, fn)</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Delete(ctx context.Context, model interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Soft-deletes if model has <code>deleted_at</code>, otherwise hard-deletes. Fires Deleting → Deleted events.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) ForceDelete(ctx context.Context, model interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Permanently deletes even if model uses soft deletes.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Restore(ctx context.Context, model interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Restores a soft-deleted record by setting <code>deleted_at = NULL</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) Paginate(ctx context.Context, dest interface{}, page, perPage int, fn ...func(*Builder)) (*Paginator, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Paginated model query with scopes, soft-delete, and eager loading.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) With(relations ...string) *ModelDB</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Prepares eager loading for named relationships. Supports dot notation for nested: <code>"Posts.Tags"</code>.</p></div>
+        </div>
+      </div>
+
+      <h3>Relationship Loading Methods</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) LoadHasMany(ctx context.Context, parent interface{}, rel HasMany, dest interface{}) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) LoadHasOne(ctx context.Context, parent interface{}, rel HasOne, dest interface{}) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) LoadBelongsTo(ctx context.Context, child interface{}, rel BelongsTo, dest interface{}) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) LoadBelongsToMany(ctx context.Context, parent interface{}, rel BelongsToMany, dest interface{}) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) EagerLoadSlice(ctx context.Context, parents interface{}, parentSchema *ModelSchema, rls []RelationDef) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ModelDB) EagerLoadSingle(ctx context.Context, parent interface{}, parentSchema *ModelSchema, rls []RelationDef) error</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>Relation Types</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">HasMany{ForeignKey, LocalKey}</span><span class="type-tag">struct</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">HasOne{ForeignKey, LocalKey}</span><span class="type-tag">struct</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BelongsTo{ForeignKey, OwnerKey}</span><span class="type-tag">struct</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BelongsToMany{PivotTable, ForeignKey, RelatedKey}</span><span class="type-tag">struct</span></div>
+        </div>
+      </div>
+
+      <!-- ─── RawQuery ────────────────────────────────── -->
+      <h2 id="types-rawquery">RawQuery</h2>
+      <p>Represents a raw SQL query. Created via <code>DB.Raw(sql, args...)</code> or <code>Tx.Raw(sql, args...)</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) Scan(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes raw SELECT. Auto-detects if dest is a struct (uses First) or slice.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) First(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes raw SELECT, scans first row. Returns ErrNotFound if no rows.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) Get(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Alias for Scan that always expects a slice.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) Exec(ctx context.Context) (sql.Result, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes raw INSERT/UPDATE/DELETE/DDL.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) ExecAffected(ctx context.Context) (int64, error)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes and returns affected rows.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) Pluck(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Scans a single column into <code>*[]T</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) Value(ctx context.Context, dest interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Scans first column of first row into dest.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *RawQuery) ToSQL() (string, []interface{})</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns the raw SQL and bindings (for debugging).</p></div>
+        </div>
+      </div>
+
+      <!-- ─── Tx ────────────────────────────────── -->
+      <h2 id="types-tx">Tx</h2>
+      <p>Transaction wrapper. Created via <code>DB.Begin()</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) Commit() error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) Rollback() error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) Savepoint(ctx context.Context, name string) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Creates named savepoint. Name validated with <code>^[a-zA-Z_][a-zA-Z0-9_]*$</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) RollbackTo(ctx context.Context, name string) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) ReleaseSavepoint(ctx context.Context, name string) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) Table(name string) *Builder</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) Raw(query string, bindings ...interface{}) *RawQuery</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (t *Tx) Model() *ModelDB</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Config ────────────────────────────────── -->
+      <h2 id="types-config">Config &amp; PoolConfig</h2>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">Config{Driver, Master, Replicas, Pool}</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <dl class="params">
+              <dt>Driver string</dt><dd>Database driver: <code>"postgres"</code>, <code>"mysql"</code>, or <code>"sqlite3"</code>.</dd>
+              <dt>Master string</dt><dd>DSN for primary read-write database.</dd>
+              <dt>Replicas []string</dt><dd>DSNs for read-only replicas. If empty, reads go to master.</dd>
+              <dt>Pool PoolConfig</dt><dd>Connection pool settings.</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">PoolConfig{MaxOpenConns, MaxIdleConns, ConnMaxLifetime, ConnMaxIdleTime}</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <p>Applied to every <code>*sql.DB</code> in a Config. Zero values use Go's <code>database/sql</code> defaults.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Schema ────────────────────────────────── -->
+      <h2 id="types-schema">Schema (Migration DSL)</h2>
+      <p>Used inside <code>Migration.Up()</code> and <code>Migration.Down()</code> methods. Created via <code>NewSchema(db)</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) Create(table string, fn func(*Blueprint)) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) CreateContext(ctx context.Context, table string, fn func(*Blueprint)) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) Table(table string, fn func(*Blueprint)) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Modifies an existing table (ALTER TABLE).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) Drop(table string) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) DropIfExists(table string) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) Raw(sql string) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes a raw DDL statement.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) RawContext(ctx context.Context, sql string) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes a raw DDL statement with custom context.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) HasTable(table string) (bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) HasTableContext(ctx context.Context, table string) (bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) HasColumn(table, column string) (bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (s *Schema) HasColumnContext(ctx context.Context, table, column string) (bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Migrator ────────────────────────────────── -->
+      <h2 id="types-migrator">Migrator</h2>
+      <p>Manages migration lifecycle. Created via <code>NewMigrator(db, migrations...)</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func NewMigrator(db *DB, migrations ...Migration) *Migrator</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) SetTable(name string) *Migrator</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Override the migrations tracking table name (default "migrations").</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Add(migrations ...Migration) *Migrator</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Run(ctx context.Context) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Executes all pending migrations in version order.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Rollback(ctx context.Context, steps int) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Rolls back n steps (0 = all) in reverse order.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Fresh(ctx context.Context) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Drops all tables and re-runs all migrations.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Status(ctx context.Context) ([]MigrationStatus, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Pending(ctx context.Context) ([]Migration, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *Migrator) Ran(ctx context.Context) (map[string]bool, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">MigrationStatus{Version string, Ran bool}</span><span class="type-tag">struct</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Blueprint ────────────────────────────────── -->
+      <h2 id="types-blueprint">Blueprint</h2>
+      <p>Column/table DSL for migrations. Created inside <code>Schema.Create()</code> or <code>Schema.Table()</code> callbacks.</p>
+
+      <h3>Column Types</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) ID() *ColumnDef</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Auto-incrementing bigint primary key named "id".</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) UUID(name ...string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) String(name string, length ...int) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Text(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) MediumText(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) LongText(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Integer(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) TinyInteger(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) SmallInteger(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) BigInteger(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Float(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Double(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Decimal(name string, precision, scale int) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Boolean(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Date(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) DateTime(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Timestamp(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) TimestampTz(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Timestamp with time zone (Postgres only).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Time(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Year(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) JSON(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) JSONB(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>JSONB (Postgres only).</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Binary(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Enum(name string, values []string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) UnsignedBigInteger(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) UnsignedInteger(name string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>Combiners</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Timestamps()</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds nullable created_at and updated_at TIMESTAMP columns.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) SoftDeletes()</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds nullable deleted_at TIMESTAMP column.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) NullableMorphs(name string)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Adds {name}_type VARCHAR and {name}_id BIGINT UNSIGNED nullable columns.</p></div>
+        </div>
+      </div>
+
+      <h3>Indexes &amp; Foreign Keys</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Index(columns ...string) *IndexDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) UniqueIndex(columns ...string) *IndexDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Primary(columns ...string) *IndexDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) DropIndex(name string)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) DropColumn(names ...string)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) Foreign(column string) *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>ColumnDef Modifiers</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) Nullable() *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) Default(v interface{}) *ColumnDef</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Type-aware: strings are auto-quoted, bools → TRUE/FALSE, nil → NULL.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) Unsigned() *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) Unique() *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) Comment(s string) *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) After(col string) *ColumnDef</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>MySQL only: AFTER clause for column ordering in ALTER TABLE.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (c *ColumnDef) AutoIncrement() *ColumnDef</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>ForeignKeyDef Modifiers</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (f *ForeignKeyDef) References(column string) *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (f *ForeignKeyDef) On(table string) *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (f *ForeignKeyDef) OnDelete(action string) *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (f *ForeignKeyDef) OnUpdate(action string) *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (f *ForeignKeyDef) CascadeOnDelete() *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (f *ForeignKeyDef) NullOnDelete() *ForeignKeyDef</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <h3>SQL Compilation</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) ToCreateSQL(d Dialect) string</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) ToIndexSQL(d Dialect) []string</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) ToDropSQL(d Dialect) string</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (b *Blueprint) ToAlterSQL(d Dialect) []string</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <!-- ─── ConnectionManager ──────────────────────── -->
+      <h2 id="types-connectionmanager">ConnectionManager</h2>
+      <p>Thread-safe registry of named <code>*DB</code> connections. Created via <code>NewConnectionManager()</code>.</p>
+
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func NewConnectionManager() *ConnectionManager</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) Add(name string, cfg Config) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) AddDB(name string, db *DB) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) DB() *DB</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns default connection.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) Connection(name string) *DB</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Returns named connection. Panics if not registered.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) ConnectionSafe(name string) (*DB, error)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) SetDefault(name string) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) Remove(name string) error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) CloseAll() error</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (m *ConnectionManager) Names() []string</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Paginator ──────────────────────── -->
+      <h2 id="types-paginator">Paginator</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">Paginator{CurrentPage, LastPage, PerPage, Total, From, To, Items}</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <dl class="params">
+              <dt>CurrentPage int</dt><dd>Current page number (1-indexed).</dd>
+              <dt>LastPage int</dt><dd>Last page number.</dd>
+              <dt>PerPage int</dt><dd>Items per page.</dd>
+              <dt>Total int64</dt><dd>Total items across all pages.</dd>
+              <dt>From int</dt><dd>Starting item number on current page.</dd>
+              <dt>To int</dt><dd>Ending item number on current page.</dd>
+              <dt>Items interface{}</dt><dd>Slice of items for current page.</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── EventDispatcher ──────────────────────── -->
+      <h2 id="types-eventdispatcher">EventDispatcher</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func NewEventDispatcher() *EventDispatcher</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (ed *EventDispatcher) Observe(model interface{}, obs interface{})</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Registers an observer for a specific model type.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (ed *EventDispatcher) ObserveAll(obs Observer)</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Registers a global observer for all model types.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (ed *EventDispatcher) Fire(ctx context.Context, event ModelEvent, model interface{}) error</span><span class="type-tag">method</span></div>
+          <div class="api-entry-body"><p>Fires an event to all registered observers (type-specific then global).</p></div>
+        </div>
+      </div>
+
+      <!-- ─── ScopeRegistry ──────────────────────── -->
+      <h2 id="types-scoperegistry">ScopeRegistry</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func NewScopeRegistry() *ScopeRegistry</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *ScopeRegistry) Add(model interface{}, scopes ...Scope)</span><span class="type-tag">method</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func (r *ScopeRegistry) Get(modelType reflect.Type) []Scope</span><span class="type-tag">method</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Dialect ──────────────────────── -->
+      <h2 id="types-dialect">Dialect (Interface)</h2>
+      <p>Abstracts database-specific SQL generation.</p>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">Dialect { Name, QuoteIdentifier, Placeholder, SupportsReturning, UpsertClause }</span><span class="type-tag">interface</span></div>
+          <div class="api-entry-body">
+            <dl class="params">
+              <dt>Name() string</dt><dd>Dialect identifier: "postgres", "mysql", "sqlite3".</dd>
+              <dt>QuoteIdentifier(name string) string</dt><dd>Wraps identifier in dialect-specific quotes (", `).</dd>
+              <dt>Placeholder(index int) string</dt><dd>Returns bind placeholder: $N for Postgres, ? for MySQL/SQLite.</dd>
+              <dt>SupportsReturning() bool</dt><dd>True for Postgres and SQLite 3.35+.</dd>
+              <dt>UpsertClause(conflictCols, updateCols []string) (string, error)</dt><dd>Returns dialect-specific UPSERT suffix.</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func GetDialect(driver string) (Dialect, error)</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Factory: returns PostgresDialect, MySQLDialect, or SQLiteDialect by driver name.</p></div>
+        </div>
+      </div>
+
+      <h3>Built-in Implementations</h3>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">PostgresDialect</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <p>Quoting: <code>"identifier"</code>. Placeholders: <code>$1</code>, <code>$2</code>, ... Supports RETURNING. UPSERT: <code>ON CONFLICT (col) DO UPDATE SET col = EXCLUDED.col</code>.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">MySQLDialect</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <p>Quoting: <code>`identifier`</code>. Placeholders: <code>?</code>. No RETURNING. UPSERT: <code>ON DUPLICATE KEY UPDATE col = new.col</code>.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">SQLiteDialect</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <p>Quoting: <code>"identifier"</code>. Placeholders: <code>?</code>. Supports RETURNING (3.35+). UPSERT: <code>ON CONFLICT DO NOTHING</code> or <code>... DO UPDATE SET col = excluded.col</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Migration Interface ──────────────────────── -->
+      <h2 id="types-migration">Migration (Interface)</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">Migration { Version, Up, Down }</span><span class="type-tag">interface</span></div>
+          <div class="api-entry-body">
+            <dl class="params">
+              <dt>Version() string</dt><dd>Unique sortable identifier (e.g. "2024_01_15_create_users").</dd>
+              <dt>Up(schema *Schema) error</dt><dd>Run the migration forward.</dd>
+              <dt>Down(schema *Schema) error</dt><dd>Roll back the migration.</dd>
+            </dl>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Observer Interface ──────────────────────── -->
+      <h2 id="types-observer">Observer (Interface)</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">Observer { Creating, Created, Updating, Updated, Saving, Saved, Deleting, Deleted, Restoring, Restored }</span><span class="type-tag">interface</span></div>
+          <div class="api-entry-body">
+            <p>Each method receives <code>(ctx context.Context, model interface{})</code> and returns <code>error</code>.
+            Return an error to abort the operation.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BaseObserver</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body"><p>Provides no-op defaults for all Observer methods. Embed to avoid implementing every method.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">ObserverFuncs</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body"><p>Allows defining observers with function fields instead of implementing the interface. Each field is <code>func(ctx context.Context, model interface{}) error</code>.</p></div>
+        </div>
+      </div>
+
+      <!-- ─── Hook Interfaces ──────────────────────── -->
+      <h2 id="types-hooks">Hook Interfaces</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BeforeCreator { BeforeCreate(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">AfterCreator { AfterCreate(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BeforeSaver { BeforeSave(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">AfterSaver { AfterSave(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BeforeUpdater { BeforeUpdate(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">AfterUpdater { AfterUpdate(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">BeforeDeleter { BeforeDelete(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">AfterDeleter { AfterDelete(ctx) error }</span><span class="type-tag">interface</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Standalone Functions ──────────────────────── -->
+      <h2 id="functions-standalone">Standalone Functions</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ParseSchema(model interface{}) (*ModelSchema, error)</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Parses a Go struct into a ModelSchema. Results cached by <code>reflect.Type</code> with <code>sync.RWMutex</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func FillFromMap(model interface{}, data map[string]interface{}) error</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Populates model fields from a column→value map. Only schema-defined columns are set.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ModelToMap(model interface{}) (map[string]interface{}, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ModelToMapWithConfig(model interface{}, cfg *SerializationConfig) (map[string]interface{}, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ToJSON(model interface{}) ([]byte, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ToJSONWithConfig(model interface{}, cfg *SerializationConfig) ([]byte, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func CollectionToMap(models interface{}) ([]map[string]interface{}, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func CollectionToMapWithConfig(models interface{}, cfg *SerializationConfig) ([]map[string]interface{}, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func CollectionToJSON(models interface{}) ([]byte, error)</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func SelectColumns(schema *ModelSchema, dialect Dialect) string</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Returns comma-separated quoted column names.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ApplyScopes(b *Builder, scopes ...Scope) *Builder</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func AddBuilderMacro(name string, fn BuilderMacro)</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Registers a global builder macro accessible on all Builder instances.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func WithStickyMaster(ctx context.Context) context.Context</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Returns a context that forces subsequent reads to use the master connection.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func ActiveScope(b *Builder) *Builder</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Built-in scope: <code>WHERE status = 'active'</code>.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func SoftDeleteScope(b *Builder) *Builder</span><span class="type-tag">function</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func WithTrashedScope() Scope</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Removes soft-delete filter, including soft-deleted records.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">func OnlyTrashedScope() Scope</span><span class="type-tag">function</span></div>
+          <div class="api-entry-body"><p>Returns only soft-deleted records.</p></div>
+        </div>
+      </div>
+
+      <!-- ─── Errors ──────────────────────── -->
+      <h2 id="errors">Sentinel Errors</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">var ErrNotFound</span><span class="type-tag">error</span></div>
+          <div class="api-entry-body"><p>Returned when a query finds no rows.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">var ErrInvalidModel</span><span class="type-tag">error</span></div>
+          <div class="api-entry-body"><p>Returned when a non-struct/non-pointer is passed as a model.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">var ErrMissingPrimaryKey</span><span class="type-tag">error</span></div>
+          <div class="api-entry-body"><p>Returned when an operation requires a primary key that is not set.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">var ErrDuplicateConnection</span><span class="type-tag">error</span></div>
+          <div class="api-entry-body"><p>Returned when registering a named connection that already exists.</p></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">QueryError{SQL, Bindings, Cause}</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <p>Wraps a query execution error with the SQL and bindings for debugging. Implements <code>Unwrap()</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Constants ──────────────────────── -->
+      <h2 id="constants">Constants &amp; Types</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">const Version = "2.0.0"</span><span class="type-tag">constant</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">type Scope func(*Builder) *Builder</span><span class="type-tag">type</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">type BuilderMacro func(*Builder, ...interface{}) interface{}</span><span class="type-tag">type</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">type ModelEvent string</span><span class="type-tag">type</span></div>
+          <div class="api-entry-body">
+            <p>Event constants: <code>EventCreating</code>, <code>EventCreated</code>, <code>EventUpdating</code>, <code>EventUpdated</code>, <code>EventSaving</code>, <code>EventSaved</code>, <code>EventDeleting</code>, <code>EventDeleted</code>, <code>EventRestoring</code>, <code>EventRestored</code>.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">type CastType int</span><span class="type-tag">type</span></div>
+          <div class="api-entry-body">
+            <p>Constants: <code>CastNone</code>, <code>CastString</code>, <code>CastInt</code>, <code>CastFloat</code>, <code>CastBool</code>, <code>CastJSON</code>, <code>CastDate</code>, <code>CastDatetime</code>.</p>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">type RelationType int</span><span class="type-tag">type</span></div>
+          <div class="api-entry-body">
+            <p>Constants: <code>HasOneRelation</code>, <code>HasManyRelation</code>, <code>BelongsToRelation</code>, <code>BelongsToManyRelation</code>, <code>MorphOneRelation</code>, <code>MorphManyRelation</code>, <code>MorphToRelation</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── Schema Types ──────────────────────── -->
+      <h2 id="types-parsing">Schema Types</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">ModelSchema{TableName, GoType, Fields, FieldByCol, FieldByGo, PrimaryKey, HasCreatedAt, HasUpdatedAt, HasSoftDelete, Relations, CastColumns}</span><span class="type-tag">struct</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">FieldSchema{GoName, ColumnName, IsPrimary, AutoIncr, Nullable, Unique, Default, GoType, Index, CastType}</span><span class="type-tag">struct</span></div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">RelationDef{GoName, Type, RelatedType, IsSlice, ForeignKey, LocalKey, OwnerKey, PivotTable, PivotFK, PivotRK, MorphType, MorphID}</span><span class="type-tag">struct</span></div>
+        </div>
+      </div>
+
+      <!-- ─── Serialization Config ──────────────────────── -->
+      <h2 id="types-serialization">Serialization Config</h2>
+      <div class="api-section">
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">SerializationConfig{DateFormat, DateTimeFormat, IncludeTimestamps, IncludeSoftDelete}</span><span class="type-tag">struct</span></div>
+          <div class="api-entry-body">
+            <dl class="params">
+              <dt>DateFormat string</dt><dd>Default: "2006-01-02".</dd>
+              <dt>DateTimeFormat string</dt><dd>Default: time.RFC3339.</dd>
+              <dt>IncludeTimestamps bool</dt><dd>Include created_at/updated_at in output.</dd>
+              <dt>IncludeSoftDelete bool</dt><dd>Include deleted_at in output.</dd>
+            </dl>
+          </div>
+        </div>
+        <div class="api-entry">
+          <div class="api-entry-header"><span class="signature">var DefaultSerializationConfig</span><span class="type-tag">variable</span></div>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

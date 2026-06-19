@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Comparison — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html" class="active">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; Comparison</div>
+
+    <div class="content">
+      <h1>ORM Comparison</h1>
+      <p>Comparing ember with the most popular Go ORMs: GORM, Bun, Ent, and SQLBoiler. This comparison focuses on developer experience, API style, performance characteristics, and ecosystem maturity.</p>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#feature-matrix">Feature Matrix</a></li>
+          <li class="toc-h2"><a href="#performance">Performance</a></li>
+          <li class="toc-h2"><a href="#api-style">API Style Comparison</a></li>
+          <li class="toc-h2"><a href="#when-to-choose">When to Choose Each ORM</a></li>
+        </ul>
+      </div>
+
+      <h2 id="feature-matrix">Feature Matrix</h2>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th class="highlight-col">ember</th>
+            <th>GORM</th>
+            <th>Bun</th>
+            <th>Ent</th>
+            <th>SQLBoiler</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Version</td>
+            <td class="highlight-col">v2.0.0</td>
+            <td>v1.x</td>
+            <td>v1.x</td>
+            <td>v0.x</td>
+            <td>v4.x</td>
+          </tr>
+          <tr>
+            <td>Code Size (approx)</td>
+            <td class="highlight-col">~3k LOC</td>
+            <td>~30k LOC</td>
+            <td>~15k LOC</td>
+            <td>~100k LOC (w/ codegen)</td>
+            <td>~40k LOC (w/ generated)</td>
+          </tr>
+          <tr>
+            <td>Dependencies</td>
+            <td class="highlight-col">1 (go-sqlite3)</td>
+            <td>~15 direct</td>
+            <td>~10 direct</td>
+            <td>~5 direct</td>
+            <td>~8 direct</td>
+          </tr>
+          <tr>
+            <td>Package Structure</td>
+            <td class="highlight-col">Flat (1 import)</td>
+            <td>Multi-package</td>
+            <td>Multi-package</td>
+            <td>Codegen + runtime</td>
+            <td>Codegen + runtime</td>
+          </tr>
+          <tr>
+            <td>Supported Databases</td>
+            <td class="highlight-col">PostgreSQL, MySQL, SQLite3</td>
+            <td>PostgreSQL, MySQL, SQLite3, SQL Server, ClickHouse</td>
+            <td>PostgreSQL, MySQL, SQLite3, SQL Server</td>
+            <td>PostgreSQL, MySQL, SQLite3, SQL Server, Gremlin</td>
+            <td>PostgreSQL, MySQL, SQLite3, SQL Server, Oracle</td>
+          </tr>
+          <tr>
+            <td>Fluent Query Builder</td>
+            <td class="highlight-col">Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Generated</td>
+            <td>Generated</td>
+          </tr>
+          <tr>
+            <td>Active Record</td>
+            <td class="highlight-col">Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>No (data mapper)</td>
+            <td>No (data mapper)</td>
+          </tr>
+          <tr>
+            <td>Migrations DSL</td>
+            <td class="highlight-col">Yes (built-in)</td>
+            <td>Yes (built-in)</td>
+            <td>Yes (built-in)</td>
+            <td>Yes (built-in)</td>
+            <td>No (external tool)</td>
+          </tr>
+          <tr>
+            <td>Auto Migrate</td>
+            <td class="highlight-col">Manual (via struct)</td>
+            <td>Yes (AutoMigrate)</td>
+            <td>Yes (AutoMigrate)</td>
+            <td>Yes (via schema)</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Eager Loading</td>
+            <td class="highlight-col">Yes (IN queries)</td>
+            <td>Yes (JOINs/Preload)</td>
+            <td>Yes (relation)</td>
+            <td>Yes (With/Edge)</td>
+            <td>Yes (Load)</td>
+          </tr>
+          <tr>
+            <td>Master/Replica Routing</td>
+            <td class="highlight-col">Built-in</td>
+            <td>Plugin/middleware</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Connection Manager (multi-DB)</td>
+            <td class="highlight-col">Yes</td>
+            <td>Yes</td>
+            <td>Via db.Conn</td>
+            <td>Via client</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>Events / Hooks</td>
+            <td class="highlight-col">Yes (Observer + interfaces)</td>
+            <td>Yes (callbacks)</td>
+            <td>Yes (hooks)</td>
+            <td>Yes (hooks)</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Global Scopes</td>
+            <td class="highlight-col">Yes (registry)</td>
+            <td>Yes (scopes)</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Attribute Casting</td>
+            <td class="highlight-col">Yes (tags)</td>
+            <td>Limited</td>
+            <td>Limited</td>
+            <td>Via codegen</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>Soft Deletes</td>
+            <td class="highlight-col">Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>Pagination</td>
+            <td class="highlight-col">Yes (COUNT + LIMIT)</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Manual</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>Raw SQL</td>
+            <td class="highlight-col">Yes (RawQuery)</td>
+            <td>Yes (Raw)</td>
+            <td>Yes (Raw)</td>
+            <td>Yes (Exec/Query)</td>
+            <td>Yes (Query/Exec)</td>
+          </tr>
+          <tr>
+            <td>Builder Macros</td>
+            <td class="highlight-col">Yes</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td>Serialization</td>
+            <td class="highlight-col">Yes (ModelToMap/JSON)</td>
+            <td>Partial</td>
+            <td>Partial</td>
+            <td>Via codegen</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>Savepoints</td>
+            <td class="highlight-col">Yes</td>
+            <td>No</td>
+            <td>No</td>
+            <td>No</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>UPSERT</td>
+            <td class="highlight-col">Yes (dialect-aware)</td>
+            <td>Yes (Clause)</td>
+            <td>Yes (ON CONFLICT)</td>
+            <td>Yes (OnConflict)</td>
+            <td>Manual</td>
+          </tr>
+          <tr>
+            <td>Thread-safe Builder</td>
+            <td class="highlight-col">No</td>
+            <td>No (Session required)</td>
+            <td>Yes</td>
+            <td>Yes</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td>Code Generation</td>
+            <td class="highlight-col">No</td>
+            <td>No</td>
+            <td>No</td>
+            <td>Yes (required)</td>
+            <td>Yes (required)</td>
+          </tr>
+          <tr>
+            <td>Learning Curve</td>
+            <td class="highlight-col">Low</td>
+            <td>Low</td>
+            <td>Medium</td>
+            <td>High</td>
+            <td>Medium</td>
+          </tr>
+          <tr>
+            <td>Community</td>
+            <td class="highlight-col">Small</td>
+            <td>Very Large</td>
+            <td>Medium</td>
+            <td>Large</td>
+            <td>Medium</td>
+          </tr>
+          <tr>
+            <td>Stars (GitHub)</td>
+            <td class="highlight-col">New</td>
+            <td>~37k</td>
+            <td>~4k</td>
+            <td>~16k</td>
+            <td>~6k</td>
+          </tr>
+          <tr>
+            <td>License</td>
+            <td class="highlight-col">Apache-2.0</td>
+            <td>MIT</td>
+            <td>BSD-2</td>
+            <td>Apache-2.0</td>
+            <td>BSD-3</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="performance">Performance</h2>
+
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Aspect</th>
+            <th class="highlight-col">ember</th>
+            <th>GORM</th>
+            <th>Bun</th>
+            <th>Ent</th>
+            <th>SQLBoiler</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Scan Overhead</td>
+            <td class="highlight-col">Reflection (cached)</td>
+            <td>Reflection (cached)</td>
+            <td>Reflection (cached)</td>
+            <td>Codegen (zero alloc)</td>
+            <td>Codegen (zero alloc)</td>
+          </tr>
+          <tr>
+            <td>Query Build Overhead</td>
+            <td class="highlight-col">Low (~3k LOC)</td>
+            <td>Medium (~30k LOC)</td>
+            <td>Low</td>
+            <td>Medium (runtime)</td>
+            <td>Low (generated)</td>
+          </tr>
+          <tr>
+            <td>Concurrent Safety</td>
+            <td class="highlight-col">Builder: No / DB: Yes</td>
+            <td>Session pattern</td>
+            <td>Builder: Yes</td>
+            <td>Client: Yes</td>
+            <td>Queries: Yes</td>
+          </tr>
+          <tr>
+            <td>Memory Allocation</td>
+            <td class="highlight-col">Moderate</td>
+            <td>High</td>
+            <td>Low</td>
+            <td>Very Low</td>
+            <td>Very Low</td>
+          </tr>
+          <tr>
+            <td>Schema Introspection</td>
+            <td class="highlight-col">Cached (RWMutex)</td>
+            <td>Cached</td>
+            <td>Cached</td>
+            <td>Codegen (no runtime)</td>
+            <td>Codegen (no runtime)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="api-style">API Style Comparison</h2>
+
+      <p>Here's how the same operation (find active users with their posts) looks across each ORM:</p>
+
+      <h3>ember</h3>
+      <pre><code>var users []User
+err := db.Model().With("Posts").All(ctx, &users, func(b *ember.Builder) {
+    b.Where("status", "=", "active")
+})</code></pre>
+
+      <h3>GORM</h3>
+      <pre><code>var users []User
+err := db.Where("status = ?", "active").Preload("Posts").Find(&users).Error</code></pre>
+
+      <h3>Bun</h3>
+      <pre><code>var users []User
+err := db.NewSelect().Model(&users).Where("status = ?", "active").Relation("Posts").Scan(ctx)</code></pre>
+
+      <h3>Ent</h3>
+      <pre><code>users, err := client.User.Query().
+    Where(user.StatusEQ(user.StatusActive)).
+    WithPosts().
+    All(ctx)</code></pre>
+
+      <h3>SQLBoiler</h3>
+      <pre><code>users, err := models.Users(
+    qm.Where("status = ?", "active"),
+    qm.Load("Posts"),
+).All(ctx, db)</code></pre>
+
+      <h2 id="when-to-choose">When to Choose Each ORM</h2>
+
+      <div class="features-grid">
+        <div class="feature-card feature-card-accent">
+          <h3>Choose ember if&hellip;</h3>
+          <ul>
+            <li>You want a Laravel Eloquent-like experience in Go.</li>
+            <li>You prefer a flat package with zero sub-packages.</li>
+            <li>You need built-in master/replica read-write splitting.</li>
+            <li>You want a migration DSL without code generation.</li>
+            <li>You value minimal dependencies (~3k LOC, 1 dependency).</li>
+            <li>You like tag-based relationships, casting, and scopes.</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <h3>Choose GORM if&hellip;</h3>
+          <ul>
+            <li>You need the largest ecosystem and community.</li>
+            <li>You want SQL Server or ClickHouse support.</li>
+            <li>You need extensive third-party plugins and middleware.</li>
+            <li>You're building a large project requiring broad database support.</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <h3>Choose Bun if&hellip;</h3>
+          <ul>
+            <li>You want a modern, well-designed query builder.</li>
+            <li>You need PostgreSQL-specific features (arrays, hstore, etc.).</li>
+            <li>You want thread-safe builders by default.</li>
+            <li>You prefer zero struct tags (all Go types).</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <h3>Choose Ent if&hellip;</h3>
+          <ul>
+            <li>You want compile-time type safety and code generation.</li>
+            <li>You're building a large project needing a schema-as-code approach.</li>
+            <li>You need graph-like queries (edges, traversals).</li>
+            <li>You can tolerate the code generation setup overhead.</li>
+          </ul>
+        </div>
+        <div class="feature-card">
+          <h3>Choose SQLBoiler if&hellip;</h3>
+          <ul>
+            <li>You want a database-first (not code-first) ORM.</li>
+            <li>You need Oracle database support.</li>
+            <li>You want zero-reflection generated code.</li>
+            <li>You have an existing database schema to work from.</li>
+          </ul>
+        </div>
+      </div>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

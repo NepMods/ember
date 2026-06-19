@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contributing — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html" class="active">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; Contributing</div>
+
+    <div class="content">
+      <h1>Contributing to ember</h1>
+      <p>Thank you for your interest in contributing to ember! This document provides guidelines for development setup, testing, coding standards, and the pull request workflow.</p>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#development-setup">Development Setup</a></li>
+          <li class="toc-h2"><a href="#running-tests">Running Tests</a></li>
+          <li class="toc-h2"><a href="#coding-standards">Coding Standards</a></li>
+          <li class="toc-h2"><a href="#project-structure">Project Structure</a></li>
+          <li class="toc-h2"><a href="#pull-request-workflow">Pull Request Workflow</a></li>
+          <li class="toc-h2"><a href="#commit-message-conventions">Commit Message Conventions</a></li>
+          <li class="toc-h2"><a href="#issue-templates">Issue Templates Guidance</a></li>
+          <li class="toc-h2"><a href="#adding-a-new-dialect">Adding a New Dialect</a></li>
+        </ul>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>Fork &amp; Clone</h3>
+          <p>Fork the repo on GitHub, then clone your fork locally.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>Set Up</h3>
+          <p>Run <code>go mod download</code> and verify tests pass.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>Branch</h3>
+          <p>Create a feature branch: <code>git checkout -b feat/my-feature</code>.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">4</div>
+          <h3>Write Code</h3>
+          <p>Follow coding standards, add tests for new functionality.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">5</div>
+          <h3>Test</h3>
+          <p>Run full test suite and vet check. Ensure no regressions.</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">6</div>
+          <h3>Submit PR</h3>
+          <p>Push your branch, open a PR, and respond to review feedback.</p>
+        </div>
+      </div>
+
+      <h2 id="development-setup">Development Setup</h2>
+
+      <h3>Prerequisites</h3>
+      <ul>
+        <li><strong>Go 1.21+</strong> (the module uses <code>go 1.26</code> — any recent version works)</li>
+        <li><strong>Git</strong> for version control</li>
+        <li><strong>SQLite3</strong> (development headers for <code>mattn/go-sqlite3</code>)</li>
+        <li>Optionally, <strong>PostgreSQL</strong> and <strong>MySQL</strong> for dialect-specific manual testing</li>
+      </ul>
+
+      <h3>Quick Start</h3>
+      <pre><code>git clone https://github.com/NepMods/ember.git
+cd ember
+go mod download
+go test -v -count=1 ./...</code></pre>
+
+      <h3>Recommended Tools</h3>
+      <ul>
+        <li><code>golangci-lint</code> — run <code>golangci-lint run ./...</code> for comprehensive linting</li>
+        <li><code>go vet</code> — always run before committing</li>
+        <li><code>staticcheck</code> — additional static analysis</li>
+        <li><code>delve</code> — debugger for stepping through complex issues</li>
+      </ul>
+
+      <h2 id="running-tests">Running Tests</h2>
+
+      <h3>Full Test Suite</h3>
+      <pre><code>go test -v -count=1 -race ./...</code></pre>
+
+      <h3>Run Specific Tests</h3>
+      <pre><code># Run a specific test function
+go test -v -run TestBuilderToSQL_Select
+
+# Run all model tests
+go test -v -run 'TestModel'
+
+# Run all relation/eager loading tests
+go test -v -run 'TestEager|TestWith|TestRelation'
+
+# Run with race detector
+go test -race -count=1 ./...</code></pre>
+
+      <h3>Test Coverage</h3>
+      <pre><code>go test -coverprofile=coverage.out ./...
+go tool cover -html=coverage.out</code></pre>
+
+      <h3>Test Guidelines</h3>
+      <ul>
+        <li>All tests use <strong>SQLite in-memory</strong> (<code>:memory:</code>) — zero setup, fast, deterministic.</li>
+        <li>Write tests in the <code>ember_test</code> package (external) to ensure the public API is exercised as a real consumer would.</li>
+        <li>For dialect-specific behavior, test via <code>ToSQL()</code> output comparison rather than connecting to each database.</li>
+        <li>Use <code>t.Parallel()</code> where appropriate, but be aware that <code>ParseSchema</code> cache and global macro state are shared.</li>
+        <li>New features require new test cases. Bug fixes require a regression test.</li>
+      </ul>
+
+      <h2 id="coding-standards">Coding Standards</h2>
+
+      <h3>Go Style</h3>
+      <ul>
+        <li>Run <code>gofmt -s</code> (or <code>go fmt ./...</code>) on all Go code. The CI pipeline enforces this.</li>
+        <li>Follow the <a href="https://go.dev/doc/effective_go">Effective Go</a> guidelines.</li>
+        <li>Use <code>golangci-lint</code> defaults — no exceptions without a comment explaining why.</li>
+        <li>Avoid <code>init()</code> functions. Use explicit initialization instead.</li>
+        <li>Prefer table-driven tests with <code>t.Run()</code> subtests.</li>
+      </ul>
+
+      <h3>Naming Conventions</h3>
+      <ul>
+        <li>Exported symbols use PascalCase. Unexported symbols use camelCase.</li>
+        <li>Acronyms are all-uppercase: <code>ParseSQL</code>, <code>ToJSON</code>, <code>NewDB</code>.</li>
+        <li>Single-letter variable names are acceptable only in short-lived scopes (loop indices, temp values).</li>
+        <li>Error variables are prefixed with <code>Err</code>: <code>ErrNotFound</code>, <code>ErrInvalidModel</code>.</li>
+        <li>Interface names end in <code>-er</code> where conventional: <code>Tabler</code>.</li>
+      </ul>
+
+      <h3>API Design Principles</h3>
+      <ul>
+        <li><strong>Flat package</strong> — No sub-packages. Everything lives in <code>ember</code>.</li>
+        <li><strong>Fluent chaining</strong> — Mutator methods return <code>*Builder</code> for chaining.</li>
+        <li><strong>Context-first</strong> — All database operations take <code>context.Context</code> as the first argument.</li>
+        <li><strong>Error returns</strong> — Methods return errors rather than panicking. Panics are reserved for programmer mistakes.</li>
+        <li><strong>Minimal dependencies</strong> — The only external dependency is <code>mattn/go-sqlite3</code>. New dependencies require discussion.</li>
+      </ul>
+
+      <h3>Documentation</h3>
+      <ul>
+        <li>Every exported symbol must have a Go doc comment.</li>
+        <li>Doc comments should be complete sentences: "ParseSchema parses a Go struct..." not "ParseSchema parses..."</li>
+        <li>Use <code>//nolint</code> comments sparingly and only with a brief justification.</li>
+        <li>Update <code>Project.md</code> when adding, removing, or restructuring files.</li>
+      </ul>
+
+      <h2 id="project-structure">Project Structure</h2>
+      <p>ember is a flat Go package. All source files live in the repository root:</p>
+      <pre><code>ember/
+  ├── orm.go           # Package doc + Version constant
+  ├── db.go            # Core DB struct — master + replica
+  ├── builder.go       # Fluent SQL builder
+  ├── model.go         # Active-record model layer
+  ├── schema.go        # Struct introspection
+  ├── dialect.go       # Dialect interface + implementations
+  ├── blueprint.go     # Migration column/table DSL
+  ├── migration.go     # Migration framework
+  ├── raw.go           # RawQuery execution
+  ├── tx.go            # Transaction wrapper
+  ├── errors.go        # Sentinel errors
+  ├── config.go        # Config structs
+  ├── manager.go       # Connection manager
+  ├── relations.go     # Eager loading engine
+  ├── pagination.go    # Paginator
+  ├── serialization.go # Serialization functions
+  ├── events.go        # Observer event system
+  ├── scopes.go        # Scope registry
+  ├── macros.go        # Builder macros
+  ├── casting.go       # Attribute casting
+  ├── orm_test.go      # Integration tests
+  └── go.mod           # Module definition</code></pre>
+
+      <h2 id="pull-request-workflow">Pull Request Workflow</h2>
+
+      <h3>Before Opening a PR</h3>
+      <ol>
+        <li>Ensure all tests pass: <code>go test -count=1 -race ./...</code></li>
+        <li>Run <code>go vet ./...</code> to catch common issues.</li>
+        <li>Run <code>golangci-lint run ./...</code> (or at minimum <code>gofmt -s -d .</code>).</li>
+        <li>Rebase onto the latest <code>main</code> branch: <code>git rebase main</code>.</li>
+        <li>Write a clear, descriptive commit message (see conventions below).</li>
+      </ol>
+
+      <h3>PR Checklist</h3>
+      <ul>
+        <li>Does the PR add new exported symbols? If so, are they documented?</li>
+        <li>Does the PR add new functionality? If so, are there tests?</li>
+        <li>Does the PR fix a bug? If so, is there a regression test?</li>
+        <li>Does the PR change behavior? If so, is <code>Project.md</code> updated?</li>
+        <li>Do all CI checks pass (tests, lint, vet)?</li>
+      </ul>
+
+      <h3>Review Process</h3>
+      <ul>
+        <li>Maintainers will review your PR within a few days.</li>
+        <li>Address review feedback with additional commits (no squashing until merge).</li>
+        <li>Once approved, a maintainer will squash-merge your PR.</li>
+        <li>After merge, update any related documentation or examples in a follow-up.</li>
+      </ul>
+
+      <h2 id="commit-message-conventions">Commit Message Conventions</h2>
+      <p>We follow <a href="https://www.conventionalcommits.org/">Conventional Commits</a> format:</p>
+
+      <pre><code>&lt;type&gt;(&lt;scope&gt;): &lt;description&gt;
+
+[optional body]
+
+[optional footer]</code></pre>
+
+      <h3>Types</h3>
+      <table>
+        <tr><th>Type</th><th>Usage</th></tr>
+        <tr><td><code>feat</code></td><td>A new feature</td></tr>
+        <tr><td><code>fix</code></td><td>A bug fix</td></tr>
+        <tr><td><code>docs</code></td><td>Documentation only changes</td></tr>
+        <tr><td><code>style</code></td><td>Formatting, missing semicolons, etc. (no code change)</td></tr>
+        <tr><td><code>refactor</code></td><td>Code change that neither fixes a bug nor adds a feature</td></tr>
+        <tr><td><code>test</code></td><td>Adding or correcting tests</td></tr>
+        <tr><td><code>chore</code></td><td>Build process or tooling changes</td></tr>
+        <tr><td><code>perf</code></td><td>Performance improvement</td></tr>
+      </table>
+
+      <h3>Scope</h3>
+      <p>Optional. Use the filename without extension: <code>builder</code>, <code>model</code>, <code>dialect</code>, <code>migration</code>, etc.</p>
+
+      <h3>Examples</h3>
+      <pre><code>feat(builder): add WhereIn support for slices
+
+fix(model): respect OwnerKey in LoadBelongsTo
+
+docs: add contributing guide
+
+refactor(dialect): split PostgresDialect into own file
+
+test: add regression test for NULL scan in SQLite</code></pre>
+
+      <h2 id="issue-templates">Issue Templates Guidance</h2>
+
+      <h3>Bug Reports</h3>
+      <p>When filing a bug report, include:</p>
+      <ul>
+        <li><strong>Go version</strong> — output of <code>go version</code></li>
+        <li><strong>ember version</strong> — the <code>Version</code> constant or commit hash</li>
+        <li><strong>Database driver</strong> — SQLite3, PostgreSQL, or MySQL</li>
+        <li><strong>Minimal reproduction</strong> — a self-contained code snippet that demonstrates the issue</li>
+        <li><strong>Expected vs actual behavior</strong></li>
+        <li><strong>Full error output</strong> — include the stack trace if panicking</li>
+      </ul>
+
+      <h3>Feature Requests</h3>
+      <p>When requesting a feature, include:</p>
+      <ul>
+        <li><strong>Use case</strong> — what problem are you trying to solve?</li>
+        <li><strong>Proposed API</strong> — how should the feature look from the caller's perspective?</li>
+        <li><strong>Alternatives considered</strong> — have you tried workarounds?</li>
+        <li><strong>Example</strong> — a code snippet showing the desired usage</li>
+      </ul>
+
+      <h3>Questions &amp; Discussions</h3>
+      <p>For questions about usage, configuration, or best practices, check the <a href="faq.html">FAQ</a> first, then open a GitHub Discussion.</p>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>

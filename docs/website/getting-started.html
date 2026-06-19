@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Getting Started — ember</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrapper">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><a href="index.html" style="color:inherit;text-decoration:none">ember</a> <small>v2.0.0</small></div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="index.html">Home</a>
+      <a href="getting-started.html" class="active">Getting Started</a>
+      <a href="api-reference.html">API Reference</a>
+      <a href="examples.html">Examples</a>
+      <a href="architecture.html">Architecture</a>
+      <a href="faq.html">FAQ</a>
+      <a href="comparison.html">Comparison</a>
+      <a href="contributing.html">Contributing</a>
+      <a href="changelog.html">Changelog</a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="https://github.com/NepMods/ember">GitHub</a> &middot; Apache-2.0
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+      <div class="search-box">
+        <span class="icon">&#128269;</span>
+        <input type="text" id="searchInput" placeholder="Search docs...">
+        <div class="search-results" id="searchResults"></div>
+      </div>
+      <div class="topbar-actions">
+        <button class="theme-toggle" id="themeToggle">🌙 Dark</button>
+      </div>
+    </header>
+
+    <div class="breadcrumb"><a href="index.html">Home</a> &raquo; Getting Started</div>
+
+    <div class="content">
+      <h1>Getting Started</h1>
+
+      <div class="toc">
+        <div class="toc-title">On this page</div>
+        <ul class="toc-list">
+          <li class="toc-h2"><a href="#installation">Installation</a></li>
+          <li class="toc-h2"><a href="#configuration">Configuration</a></li>
+          <li class="toc-h2"><a href="#define-your-first-model">Define Your First Model</a></li>
+          <li class="toc-h2"><a href="#crud-operations">CRUD Operations</a></li>
+          <li class="toc-h2"><a href="#migrations">Migrations</a></li>
+          <li class="toc-h2"><a href="#relationships">Relationships</a></li>
+          <li class="toc-h2"><a href="#eager-loading">Eager Loading</a></li>
+          <li class="toc-h2"><a href="#scopes">Scopes</a></li>
+          <li class="toc-h2"><a href="#events">Events</a></li>
+          <li class="toc-h2"><a href="#serialization">Serialization</a></li>
+        </ul>
+      </div>
+
+      <h2 id="installation">Installation</h2>
+      <pre><code>go get github.com/NepMods/ember</code></pre>
+      <p>Then import it as a single flat package:</p>
+      <pre><code>import ember "github.com/NepMods/ember"</code></pre>
+      <p>No sub-packages, no complex import chains. One import, everything you need.</p>
+
+      <h2 id="configuration">Configuration</h2>
+      <p>Use <code>Config</code> to define a database connection group with one master and N read replicas:</p>
+      <pre><code>db, err := ember.Open(ember.Config{
+    Driver:   "postgres",
+    Master:   "postgres://user:pass@localhost/mydb?sslmode=disable",
+    Replicas: []string{
+        "postgres://user:pass@replica1/mydb?sslmode=disable",
+    },
+    Pool: ember.PoolConfig{
+        MaxOpenConns:    25,
+        MaxIdleConns:    10,
+        ConnMaxLifetime: 5 * time.Minute,
+    },
+})</code></pre>
+      <p>Supported drivers: <code>postgres</code> (or <code>pgx</code>), <code>mysql</code>, <code>sqlite3</code> (or <code>sqlite</code>).</p>
+      <p>If no replicas are provided, reads go to master. Use <code>ember.WithStickyMaster(ctx)</code> after writes to force reads to master.</p>
+      <p>For SQLite in-memory testing:</p>
+      <pre><code>db, _ := ember.Open(ember.Config{
+    Driver: "sqlite3",
+    Master: ":memory:",
+})</code></pre>
+
+      <h2 id="define-your-first-model">Define Your First Model</h2>
+      <p>Models are plain Go structs with <code>ember</code> struct tags:</p>
+      <pre><code>type User struct {
+    ID        int64      `ember:"primaryKey;autoIncr"`
+    Name      string
+    Email     string     `ember:"unique"`
+    Age       int        `ember:"default:0"`
+    Status    string     `ember:` + "`" + `default:"active"` + "`" + ``
+    Metadata  map[string]interface{} `ember:"cast:json"`
+    CreatedAt time.Time
+    UpdatedAt time.Time
+    DeletedAt *time.Time `ember:"nullable"`
+}</code></pre>
+      <p>The table name is automatically derived from the struct name using snake_case pluralization (<code>User</code> &rarr; <code>users</code>). Override with the <code>Tabler</code> interface:</p>
+      <pre><code>func (u *User) TableName() string { return "my_users" }</code></pre>
+
+      <h3>Tag Reference</h3>
+      <table>
+        <tr><th>Tag</th><th>Description</th></tr>
+        <tr><td><code>column:name</code></td><td>Override column name</td></tr>
+        <tr><td><code>primaryKey</code></td><td>Mark as primary key</td></tr>
+        <tr><td><code>autoIncr</code></td><td>Auto-incrementing</td></tr>
+        <tr><td><code>nullable</code></td><td>Allow NULL</td></tr>
+        <tr><td><code>unique</code></td><td>Unique constraint</td></tr>
+        <tr><td><code>default:val</code></td><td>Default value</td></tr>
+        <tr><td><code>cast:json|date|datetime|string|int|float|bool</code></td><td>Attribute casting</td></tr>
+        <tr><td><code>-</code></td><td>Skip field</td></tr>
+      </table>
+
+      <h3>Auto-Detected Columns</h3>
+      <table>
+        <tr><th>Column Name</th><th>Feature</th></tr>
+        <tr><td><code>id</code></td><td>Auto-detected as primary key (if no explicit <code>primaryKey</code>)</td></tr>
+        <tr><td><code>created_at</code></td><td>Auto-set on create, cast as datetime</td></tr>
+        <tr><td><code>updated_at</code></td><td>Auto-set on create/update, cast as datetime</td></tr>
+        <tr><td><code>deleted_at</code></td><td>Enables soft deletes, cast as datetime</td></tr>
+      </table>
+
+      <h2 id="crud-operations">CRUD Operations</h2>
+
+      <h3>Create</h3>
+      <pre><code>user := &User{Name: "Alice", Email: "alice@example.com"}
+err := db.Model().Create(ctx, user)
+// user.ID and timestamps are populated automatically</code></pre>
+
+      <h3>Find by Primary Key</h3>
+      <pre><code>var user User
+err := db.Model().Find(ctx, &user, 42)
+
+// Or with a non-standard PK column
+type CustomModel struct {
+    UUID string `ember:"primaryKey"`
+}
+var m CustomModel
+db.Model().Find(ctx, &m, "abc-123")</code></pre>
+
+      <h3>First / All with constraints</h3>
+      <pre><code>var user User
+err := db.Model().First(ctx, &user, func(b *ember.Builder) {
+    b.Where("email", "=", "alice@example.com")
+})
+
+var users []User
+err := db.Model().All(ctx, &users)
+
+var adults []User
+db.Model().All(ctx, &adults, func(b *ember.Builder) {
+    b.Where("age", ">=", 18).OrderBy("name", "ASC")
+})</code></pre>
+
+      <h3>Where (shorthand)</h3>
+      <pre><code>var users []User
+db.Model().Where(ctx, &users, func(b *ember.Builder) {
+    b.Where("age", ">", 18).Where("status", "=", "active")
+})</code></pre>
+
+      <h3>Update</h3>
+      <pre><code>user.Name = "Alice Smith"
+user.Age = 31
+err := db.Model().Save(ctx, &user)
+
+// Update specific columns only
+err := db.Model().Update(ctx, &user, "name", "email")</code></pre>
+
+      <h3>Delete (Hard &amp; Soft)</h3>
+      <pre><code>// Hard delete (no deleted_at column)
+err := db.Model().Delete(ctx, &user)
+
+// Soft delete (sets deleted_at = now)
+err := db.Model().Delete(ctx, &softDeletableUser)
+
+// Force delete even with soft deletes
+err := db.Model().ForceDelete(ctx, &user)
+
+// Restore a soft-deleted record
+err := db.Model().Restore(ctx, &user)</code></pre>
+
+      <h2 id="migrations">Migrations</h2>
+      <p>Migrations implement the <code>Migration</code> interface:</p>
+      <pre><code>type CreateUsersTable struct{}
+
+func (m *CreateUsersTable) Version() string {
+    return "2024_01_01_create_users"
+}
+
+func (m *CreateUsersTable) Up(s *ember.Schema) error {
+    return s.Create("users", func(t *ember.Blueprint) {
+        t.ID()
+        t.String("name")
+        t.String("email").Unique()
+        t.String("status").Default("active")
+        t.Timestamps()
+        t.SoftDeletes()
+    })
+}
+
+func (m *CreateUsersTable) Down(s *ember.Schema) error {
+    return s.Drop("users")
+}</code></pre>
+
+      <h3>Running Migrations</h3>
+      <pre><code>migrator := ember.NewMigrator(db, &CreateUsersTable{}, &CreatePostsTable{})
+migrator.Run(ctx)                     // Run pending
+migrator.Rollback(ctx, 1)            // Rollback last step
+migrator.Rollback(ctx, 0)            // Rollback all
+migrator.Fresh(ctx)                  // Drop all + re-run
+statuses, _ := migrator.Status(ctx)  // List all with status</code></pre>
+
+      <h3>Blueprint Column Types</h3>
+      <pre><code>t.ID()                    // Auto-increment bigint PK
+t.UUID()                  // UUID primary key (varchar 36)
+t.String("name", 100)     // VARCHAR (default 255)
+t.Text("body")            // TEXT
+t.Integer("count")        // INT
+t.BigInteger("views")     // BIGINT
+t.SmallInteger("rating")  // SMALLINT
+t.TinyInteger("flag")     // TINYINT
+t.Float("score")          // FLOAT
+t.Double("price")         // DOUBLE
+t.Decimal("amount", 10, 2) // DECIMAL(10,2)
+t.Boolean("active")       // BOOLEAN
+t.Date("birthday")        // DATE
+t.DateTime("published")   // DATETIME
+t.Timestamp("created_at") // TIMESTAMP
+t.JSON("metadata")        // JSON
+t.JSONB("data")           // JSONB (Postgres)
+t.Enum("status", []string{"draft","published"})
+t.Binary("avatar")        // BLOB/BYTEA
+t.Timestamps()            // created_at + updated_at
+t.SoftDeletes()           // deleted_at</code></pre>
+
+      <h3>Foreign Keys &amp; Indexes</h3>
+      <pre><code>s.Create("posts", func(t *ember.Blueprint) {
+    t.ID()
+    t.String("title")
+    t.Text("body")
+    t.UnsignedBigInteger("user_id")
+    t.Timestamps()
+
+    // Foreign key
+    t.Foreign("user_id").References("id").On("users").CascadeOnDelete()
+
+    // Indexes
+    t.Index("title")
+    t.UniqueIndex("slug")
+})</code></pre>
+
+      <h3>Altering Tables</h3>
+      <pre><code>s.Table("users", func(t *ember.Blueprint) {
+    t.String("phone").Nullable().After("email")
+    t.DropColumn("legacy_field")
+    t.Index("phone")
+})</code></pre>
+
+      <h2 id="relationships">Relationships</h2>
+      <p>Relationships are declared with <code>ember:"relation:..."</code> tags:</p>
+      <pre><code>type User struct {
+    ID        int64    `ember:"primaryKey;autoIncr"`
+    Name      string
+    Posts     []Post  `ember:"relation:hasMany;foreignKey:user_id;localKey:id"`
+    Profile   Profile `ember:"relation:hasOne;foreignKey:user_id;localKey:id"`
+}
+
+type Post struct {
+    ID      int64  `ember:"primaryKey;autoIncr"`
+    UserID  int64  `ember:"column:user_id"`
+    Title   string
+    Author  User   `ember:"relation:belongsTo;foreignKey:user_id;ownerKey:id"`
+    Tags    []Tag  `ember:"relation:belongsToMany;pivot:post_tags;pivotFK:post_id;pivotRK:tag_id"`
+}
+
+type Tag struct {
+    ID   int64  `ember:"primaryKey;autoIncr"`
+    Name string
+}</code></pre>
+
+      <h4>Relation Tag Reference</h4>
+      <table>
+        <tr><th>Key</th><th>Description</th></tr>
+        <tr><td><code>relation:hasMany</code></td><td>One-to-many relationship</td></tr>
+        <tr><td><code>relation:hasOne</code></td><td>One-to-one relationship</td></tr>
+        <tr><td><code>relation:belongsTo</code></td><td>Inverse one-to-one/many</td></tr>
+        <tr><td><code>relation:belongsToMany</code></td><td>Many-to-many via pivot</td></tr>
+        <tr><td><code>foreignKey</code></td><td>Foreign key column on related table</td></tr>
+        <tr><td><code>localKey</code></td><td>Local key column on parent table</td></tr>
+        <tr><td><code>ownerKey</code></td><td>Key on parent table (BelongsTo)</td></tr>
+        <tr><td><code>pivot</code></td><td>Pivot table name (BelongsToMany)</td></tr>
+        <tr><td><code>pivotFK</code></td><td>Pivot foreign key column</td></tr>
+        <tr><td><code>pivotRK</code></td><td>Pivot related key column</td></tr>
+      </table>
+
+      <h3>Loading Single Relations</h3>
+      <pre><code>var user User
+db.Model().Find(ctx, &user, 1)
+
+var posts []Post
+db.Model().LoadHasMany(ctx, &user, ember.HasMany{ForeignKey: "user_id"}, &posts)
+
+var profile Profile
+db.Model().LoadHasOne(ctx, &user, ember.HasOne{ForeignKey: "user_id"}, &profile)
+
+var author User
+db.Model().LoadBelongsTo(ctx, &post, ember.BelongsTo{ForeignKey: "user_id"}, &author)
+
+var tags []Tag
+db.Model().LoadBelongsToMany(ctx, &post, ember.BelongsToMany{
+    PivotTable: "post_tags", ForeignKey: "post_id", RelatedKey: "tag_id",
+}, &tags)</code></pre>
+
+      <h2 id="eager-loading">Eager Loading</h2>
+      <p>Use <code>With()</code> to eager-load relationships and eliminate N+1 queries:</p>
+      <pre><code>var users []User
+db.Model().With("Posts", "Profile").All(ctx, &users)
+
+// Nested eager loading
+db.Model().With("Posts.Tags").All(ctx, &users)
+
+// With constraints
+var user User
+db.Model().With("Posts").Find(ctx, &user, 1)</code></pre>
+
+      <p>Eager loading executes two queries instead of one complex JOIN, using <code>WHERE fk IN (...)</code> to collect related records, then groups them in memory by foreign key.</p>
+
+      <h2 id="scopes">Scopes</h2>
+      <p>Scopes are reusable query constraints:</p>
+      <pre><code>// Define a scope
+func ActiveScope(b *ember.Builder) *ember.Builder {
+    return b.Where("status", "=", "active")
+}
+
+// Apply to a query
+ember.ApplyScopes(db.Table("users"), ActiveScope).Get(ctx, &users)
+
+// Built-in scopes
+db.Model().All(ctx, &users) // automatically applies registered global scopes</code></pre>
+
+      <h3>Global Scopes</h3>
+      <p>Register scopes that apply automatically to all queries for a model type:</p>
+      <pre><code>db.ScopeRegistry().Add(&User{}, ActiveScope)
+
+// Now every User query includes status = 'active'
+db.Model().All(ctx, &users)
+db.Model().Find(ctx, &user, 1)
+
+// Built-in helpers
+ember.ActiveScope(b)      // WHERE status = 'active'
+ember.SoftDeleteScope(b)  // WHERE deleted_at IS NULL
+ember.WithTrashedScope()  // Remove soft-delete filter
+ember.OnlyTrashedScope()  // Only deleted records</code></pre>
+
+      <h2 id="events">Events</h2>
+      <p>ember supports 10 lifecycle events via the Observer pattern:</p>
+      <pre><code>// Using the Observer interface
+type AuditObserver struct {
+    ember.BaseObserver
+}
+func (o *AuditObserver) Created(ctx context.Context, model interface{}) error {
+    log.Printf("Created: %T %+v", model, model)
+    return nil
+}
+
+// Using ObserverFuncs
+obs := &ember.ObserverFuncs{
+    SavedFunc: func(ctx context.Context, m interface{}) error {
+        log.Printf("Saved: %+v", m)
+        return nil
+    },
+}
+
+// Register per-model
+dispatcher := ember.NewEventDispatcher()
+dispatcher.Observe(&User{}, &AuditObserver{})
+dispatcher.Observe(&User{}, obs)
+db.SetEventDispatcher(dispatcher)
+
+// Register global observer (all models)
+dispatcher.ObserveAll(&AuditObserver{})</code></pre>
+
+      <h3>Hook Interfaces</h3>
+      <p>Models can also implement hook interfaces directly:</p>
+      <pre><code>type User struct { ... }
+func (u *User) BeforeCreate(ctx context.Context) error {
+    if u.Name == "" { return fmt.Errorf("name required") }
+    return nil
+}</code></pre>
+      <p>Available hook interfaces: <code>BeforeCreator</code>, <code>AfterCreator</code>, <code>BeforeSaver</code>, <code>AfterSaver</code>, <code>BeforeUpdater</code>, <code>AfterUpdater</code>, <code>BeforeDeleter</code>, <code>AfterDeleter</code>.</p>
+
+      <h3>Event Lifecycle Order</h3>
+      <pre><code>Create:    Saving → Creating → BeforeSave → BeforeCreate → [SQL INSERT] → AfterCreate → AfterSave → Created → Saved
+Update:    Saving → Updating → BeforeSave → BeforeUpdate → [SQL UPDATE] → AfterUpdate → AfterSave → Updated → Saved
+Delete:    Deleting → BeforeDelete → [SQL DELETE] → AfterDelete → Deleted
+Restore:   Saving → Restoring → BeforeSave → [SQL UPDATE] → AfterSave → Restored → Saved</code></pre>
+
+      <h2 id="serialization">Serialization</h2>
+      <pre><code>// Map
+m, _ := ember.ModelToMap(user)
+// {"id":1, "name":"Alice", "created_at":"2024-01-15T10:00:00Z"}
+
+// JSON
+json, _ := ember.ToJSON(user)
+
+// Collections
+list, _ := ember.CollectionToMap(users)
+json, _ := ember.CollectionToJSON(users)
+
+// With config
+cfg := &ember.SerializationConfig{
+    DateFormat:        "2006-01-02",
+    DateTimeFormat:    "2006-01-02 15:04:05",
+    IncludeTimestamps: false,
+    IncludeSoftDelete: false,
+}
+m, _ := ember.ModelToMapWithConfig(user, cfg)</code></pre>
+
+      <p>For more detailed examples, see the <a href="examples.html">Examples</a> page.</p>
+
+      <footer class="footer">
+        <p>ember v2.0.0 &mdash; Apache-2.0 License</p>
+      </footer>
+    </div>
+  </div>
+</div>
+<script src="script.js"></script>
+</body>
+</html>
