@@ -28,6 +28,5 @@ jobs:
               --base main \
               --head "$BRANCH" \
               --title "Merge $BRANCH → main" \
-              --body "Automated PR created by CI when pushing to \`$BRANCH\`." \
-              --label automated
+              --body "Automated PR created by CI when pushing to \`$BRANCH\`."
           fi
